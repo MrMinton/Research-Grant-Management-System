@@ -16,7 +16,29 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.contrib.auth import views as auth_views # Django's built-in auth views
+from users import views as user_views # Your User views
+from grants import views as grant_views # Your Grant views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    path('', user_views.home, name='home'),
+
+    # --- AUTHENTICATION (Login/Logout) ---
+    # We use Django's built-in LoginView but tell it to use OUR template
+    path('login/', auth_views.LoginView.as_view(template_name='users/login.html'), name='login'),
+    
+    # We use Django's built-in LogoutView
+    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+
+    # --- RESEARCHER FEATURES ---
+    # Register a new account
+    path('register/', user_views.register_researcher, name='register'),
+    
+    # The Researcher Dashboard
+    path('dashboard/', grant_views.researcher_dashboard, name='researcher_dashboard'),
+    
+    # Submit a new proposal
+    path('submit-proposal/', grant_views.submit_proposal, name='submit_proposal'),
 ]
