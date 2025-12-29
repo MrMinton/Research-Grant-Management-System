@@ -1,6 +1,6 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Proposal
+from .models import Proposal, Grant, Budget
 from .forms import ProposalForm
 
 @login_required
@@ -50,3 +50,49 @@ def reviewer_dashboard(request):
         'proposals': proposals_to_review
     }
     return render(request, 'users/reviewer_dashboard.html', context)
+
+
+# HOD PART
+
+@login_required
+def hod_dashboard(request):
+    # Security: Ensure only HODs can access
+    if request.user.role != 'HOD':
+        return redirect('home')
+
+    pending_proposals = Proposal.objects.filter(status='Review Complete')
+    
+    # Fetch active grants for the monitoring section
+    active_grants = Grant.objects.all()
+
+    return render(request, 'grants/hod_dashboard.html', {
+        'pending_proposals': pending_proposals,
+        'active_grants': active_grants
+    })
+
+@login_required
+def approve_proposal(request, proposal_id):
+    if request.user.role != 'HOD':
+        return redirect('home')
+
+    proposal = get_object_or_404(Proposal, pk=proposal_id)
+
+    if request.method == 'POST':
+        proposal.status = 'Approved'
+        proposal.save()
+
+        new_grant = Grant.objects.create(
+            proposal=proposal,
+            totalAllocatedAmount=request.POST.get('amount'),
+            startDate=request.POST.get('start_date'),
+            endDate=request.POST.get('end_date')
+        )
+        Budget.objects.create(
+            grant=new_grant,
+            remainingBalance=new_grant.totalAllocatedAmount,
+            expendituresDetails="Initial allocation."
+        )
+
+        return redirect('hod_dashboard')
+
+    return render(request, 'grants/approve_form.html', {'proposal': proposal})

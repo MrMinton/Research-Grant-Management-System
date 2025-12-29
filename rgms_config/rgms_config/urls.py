@@ -47,4 +47,8 @@ urlpatterns = [
     
     # Submit a new proposal
     path('submit-proposal/', grant_views.submit_proposal, name='submit_proposal'),
+
+	# --- HOD FEATURES ---
+	path('hod/dashboard/', grant_views.hod_dashboard, name='hod_dashboard'),
+    path('hod/approve/<int:proposal_id>/', grant_views.approve_proposal, name='approve_proposal'),
 ]
