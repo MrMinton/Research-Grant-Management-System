@@ -4,6 +4,7 @@ from users.models import Researcher, Reviewer, HOD, User
 class Proposal(models.Model):
     proposalID = models.AutoField(primary_key=True) 
     title = models.CharField(max_length=255)
+    pdf_file = models.FileField(upload_to='proposals/pdfs/', null=True, blank=True)
     submissionDate = models.DateField(auto_now_add=True) 
     status = models.CharField(max_length=50, default='Draft') 
     version = models.FloatField(default=1.0) 
@@ -12,7 +13,7 @@ class Proposal(models.Model):
 class Grant(models.Model):
     grantID = models.AutoField(primary_key=True) 
     totalAllocatedAmount = models.DecimalField(max_digits=12, decimal_places=2) 
-    startDate = models.DateField() 
+    startDate = models.DateField()
     endDate = models.DateField() 
     proposal = models.OneToOneField(Proposal, on_delete=models.CASCADE) 
 

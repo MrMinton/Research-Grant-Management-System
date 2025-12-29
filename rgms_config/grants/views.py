@@ -21,15 +21,12 @@ def researcher_dashboard(request):
 def submit_proposal(request):
     if request.user.role != 'Researcher':
         return redirect('home')
-
+	
     if request.method == 'POST':
         form = ProposalForm(request.POST)
         if form.is_valid():
-            # Create the object but don't save to DB yet
             proposal = form.save(commit=False)
-            # Attach the logged-in researcher
             proposal.researcher = request.user.researcher
-            # Now save it
             proposal.save()
             return redirect('researcher_dashboard')
     else:
@@ -60,13 +57,13 @@ def hod_dashboard(request):
     if request.user.role != 'HOD':
         return redirect('home')
 
-    pending_proposals = Proposal.objects.filter(status='Review Complete')
+    proposals = Proposal.objects.filter(status='Review Complete')
     
     # Fetch active grants for the monitoring section
     active_grants = Grant.objects.all()
 
     return render(request, 'grants/hod_dashboard.html', {
-        'pending_proposals': pending_proposals,
+        'proposals': proposals,
         'active_grants': active_grants
     })
 

@@ -19,6 +19,8 @@ from django.urls import path
 from django.contrib.auth import views as auth_views # Django's built-in auth views
 from users import views as user_views # Your User views
 from grants import views as grant_views # Your Grant views
+from django.conf import settings
+from django.conf.urls.static import static 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -52,3 +54,6 @@ urlpatterns = [
 	path('hod/dashboard/', grant_views.hod_dashboard, name='hod_dashboard'),
     path('hod/approve/<int:proposal_id>/', grant_views.approve_proposal, name='approve_proposal'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
