@@ -19,8 +19,10 @@
                 <p>Welcome back, <strong>{{ user.username }}</strong>!</p>
                 {% if user.role == 'Researcher' %}
                     <a href="{% url 'researcher_dashboard' %}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+                {% elif user.role == 'Reviewer' %}
+                     <a href="{% url 'reviewer_dashboard' %}" class="btn btn-primary btn-lg">Go to Dashboard</a>
                 {% else %}
-                     <a href="#" class="btn btn-primary btn-lg">Go to Dashboard</a>
+                     <a href="{% url 'dashboard_dispatch' %}" class="btn btn-primary btn-lg">Go to Dashboard</a>
                 {% endif %}
             {% endif %}
         </div>

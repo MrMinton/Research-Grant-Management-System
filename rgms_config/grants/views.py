@@ -35,3 +35,18 @@ def submit_proposal(request):
     else:
         form = ProposalForm()
     return render(request, 'grants/submit_proposal.html', {'form': form})
+
+@login_required
+def reviewer_dashboard(request):
+    # 1. Security check: Ensure the user is actually a Reviewer
+    if request.user.role != 'Reviewer':
+        return redirect('home')
+
+    # 2. Get proposals. 
+    # Reviewers should see everything that is NOT a 'Draft'.
+    proposals_to_review = Proposal.objects.exclude(status='Draft')
+
+    context = {
+        'proposals': proposals_to_review
+    }
+    return render(request, 'users/reviewer_dashboard.html', context)
