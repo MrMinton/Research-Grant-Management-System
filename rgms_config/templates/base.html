@@ -25,7 +25,7 @@
                 {% elif user.role == 'HOD' %}
                     <a href="#">HOD Dashboard</a>
                 {% elif user.role == 'Reviewer' %}
-                    <a href="#">Reviewer Dashboard</a>
+                    <a href="{% url 'reviewer_dashboard' %}">Reviewer Dashboard</a>
                 {% endif %}
             {% endif %}
         </div>

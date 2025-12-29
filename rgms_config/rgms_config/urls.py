@@ -32,6 +32,12 @@ urlpatterns = [
     # We use Django's built-in LogoutView
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
 
+    # Dispatcher (The URL used by LOGIN_REDIRECT_URL)
+    path('dashboard/', user_views.dashboard_dispatch, name='dashboard_dispatch'),
+
+    # REVIEWER DASHBOARD URL
+    path('reviewer/dashboard/', grant_views.reviewer_dashboard, name='reviewer_dashboard'),
+
     # --- RESEARCHER FEATURES ---
     # Register a new account
     path('register/', user_views.register_researcher, name='register'),
