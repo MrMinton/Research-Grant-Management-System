@@ -1,55 +1,53 @@
 {% load static %} <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RGMS - Research Grant Management</title>
-    
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
-    {% block extra_css %}
-    {% endblock %}
-</head>
-<body>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
 
+    {% block extra_css %} {% endblock %}
+  </head>
+  <body>
     <nav>
-        <a href="/" class="nav-brand">RGMS Portal</a>
-        
-        <div class="nav-links">
-            {% if user.is_authenticated %}
-                <a href="/">Home</a>
-                
-                {% if user.role == 'Researcher' %}
-                    <a href="{% url 'researcher_dashboard' %}">Dashboard</a>
-                    <a href="{% url 'submit_proposal' %}">New Proposal</a>
-                {% elif user.role == 'HOD' %}
-                    <a href="#">HOD Dashboard</a>
-                {% elif user.role == 'Reviewer' %}
-                    <a href="{% url 'reviewer_dashboard' %}">Reviewer Dashboard</a>
-                {% endif %}
-            {% endif %}
-        </div>
+      <a href="/" class="nav-brand">RGMS Portal</a>
 
-        <div class="user-section">
-            {% if user.is_authenticated %}
-                <span>Hello, <strong>{{ user.username }}</strong></span>
-                <form action="{% url 'logout' %}" method="post" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="logout-btn">Logout</button>
-                </form>
-            {% else %}
-                <a href="{% url 'login' %}" style="color: #bdc3c7;">Login</a>
-                <a href="{% url 'register' %}" class="btn btn-primary" style="margin-left: 10px;">Researcher Sign Up</a>
-            {% endif %}
-        </div>
+      <div class="nav-links">
+        {% if user.is_authenticated %}
+        <a href="/">Home</a>
+
+        {% if user.role == 'Researcher' %}
+        <a href="{% url 'researcher_dashboard' %}">Dashboard</a>
+        <a href="{% url 'submit_proposal' %}">New Proposal</a>
+        {% elif user.role == 'HOD' %}
+        <a href="{% url 'hod_dashboard' %}">HOD Dashboard</a>
+        {% elif user.role == 'Reviewer' %}
+        <a href="{% url 'reviewer_dashboard' %}">Reviewer Dashboard</a>
+        {% endif %} {% endif %}
+      </div>
+
+      <div class="user-section">
+        {% if user.is_authenticated %}
+        <span>Hello, <strong>{{ user.username }}</strong></span>
+        <form action="{% url 'logout' %}" method="post" style="display: inline">
+          {% csrf_token %}
+          <button type="submit" class="logout-btn">Logout</button>
+        </form>
+        {% else %}
+        <a href="{% url 'login' %}" style="color: #bdc3c7">Login</a>
+        <a
+          href="{% url 'register' %}"
+          class="btn btn-primary"
+          style="margin-left: 10px"
+          >Researcher Sign Up</a
+        >
+        {% endif %}
+      </div>
     </nav>
 
     <div class="container">
-        <div class="card">
-            {% block content %}
-            {% endblock %}
-        </div>
+      <div class="card">{% block content %} {% endblock %}</div>
     </div>
-
-</body>
+  </body>
 </html>
