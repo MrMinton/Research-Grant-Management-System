@@ -1,0 +1,29 @@
+{% extends 'base.html' %} {% block content %}
+<h2>Approve Grant: {{ proposal.title }}</h2>
+<form method="post">
+{% csrf_token %}
+<h3>Reviewer Evaluations</h3>
+{% for evaluation in evaluations %}
+	<div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px">
+	<strong>Reviewer:</strong> {{ evaluation.reviewer.username }}<br />
+    <strong>Comments:</strong>
+    <p>{{ evaluation.feedbackComments }}</p>
+    <strong>Rating:</strong> {{ evaluation.score }}/100
+  	</div>
+  {% empty %}
+  <p>No evaluations available for this proposal.</p>
+{% endfor %}
+
+  <label>Total Allocated Amount ($):</label>
+  <input type="number" name="amount" step="0.01" required />
+
+  <label>Start Date:</label>
+  <input type="date" name="start_date" required />
+
+  <label>End Date:</label>
+  <input type="date" name="end_date" required />
+
+  <button type="submit" class="btn btn-primary">Confirm Approval</button>
+  <a href="{% url 'hod_dashboard' %}">Cancel</a>
+</form>
+{% endblock %}

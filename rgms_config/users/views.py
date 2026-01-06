@@ -19,16 +19,10 @@ def register_researcher(request):
 
 @login_required
 def dashboard_dispatch(request):
-    # --- DEBUGGING START ---
-    print(f"LOGGED IN USER: {request.user.username}")
-    print(f"USER ROLE: '{request.user.role}'")
-    # --- DEBUGGING END ---
-
     if request.user.role == 'Reviewer':
         return redirect('reviewer_dashboard')
-        
     elif request.user.role == 'Researcher':
         return redirect('researcher_dashboard')
-        
-    # If the role is empty or wrong, it falls through to here:
+    elif request.user.role == 'HOD':
+        return redirect('hod_dashboard')
     return redirect('home')
