@@ -1,7 +1,9 @@
+from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Proposal, Grant, Budget, Evaluation
 from .forms import ProposalForm
+from decimal import Decimal
 
 @login_required
 def researcher_dashboard(request):
@@ -69,29 +71,41 @@ def hod_dashboard(request):
 
 @login_required
 def approve_proposal(request, proposal_id):
-    if request.user.role != 'HOD':
-        return redirect('home')
+	if request.user.role != 'HOD':
+		return redirect('home')
 
-    proposal = get_object_or_404(Proposal, pk=proposal_id)
-    evaluations = Evaluation.objects.filter(proposal=proposal)
+	proposal = get_object_or_404(Proposal, pk=proposal_id)
+	evaluations = Evaluation.objects.filter(proposal=proposal)
+	hod_user = request.user.hod
 
-    
-    if request.method == 'POST':
-        proposal.status = 'Approved'
-        proposal.save()
+	if request.method == 'POST':
+		requested_amount = Decimal(proposal.requested_amount)
+          
+		if requested_amount <= hod_user.total_department_budget:
+			new_grant, created = Grant.objects.update_or_create(
+				proposal=proposal,
+				totalAllocatedAmount=request.POST.get('amount'),
+				startDate=request.POST.get('start_date'),
+				endDate=request.POST.get('end_date')
+			)
+            
+			if created:
+				hod_user.total_department_budget -= requested_amount
+				hod_user.save()
 
-        new_grant = Grant.objects.create(
-            proposal=proposal,
-            totalAllocatedAmount=request.POST.get('amount'),
-            startDate=request.POST.get('start_date'),
-            endDate=request.POST.get('end_date')
-        )
-        Budget.objects.create(
-            grant=new_grant,
-            remainingBalance=new_grant.totalAllocatedAmount,
-            expendituresDetails="Initial allocation."
-        )
+				Budget.objects.create(
+					grant=new_grant,
+					remainingBalance=new_grant.totalAllocatedAmount,
+					expendituresDetails="Initial allocation."
+				)
+                
+				proposal.status = 'Approved'
+				proposal.save()
+                    
+				messages.success(request, 'Proposal approved and grant created successfully.')
+				return redirect('hod_dashboard')
+		else:
+			error_message = f"Insufficient department budget to approve this proposal. Your current budget is {hod_user.total_department_budget}."
+			return render(request, 'grants/approve_form.html', {'proposal': proposal, 'evaluations': evaluations, 'error_message': error_message, 'hod_budget': hod_user.total_department_budget})
 
-        return redirect('hod_dashboard')
-
-    return render(request, 'grants/approve_form.html', {'proposal': proposal, 'evaluations': evaluations})
+	return render(request, 'grants/approve_form.html', {'proposal': proposal, 'evaluations': evaluations, 'hod_budget': hod_user.total_department_budget})

@@ -8,10 +8,12 @@ class CustomUserAdmin(UserAdmin):
     )
     list_display = ['username', 'email', 'role', 'is_staff']
 
+#add budget field to HOD admin
 class HODAdmin(CustomUserAdmin):
     """Specific Admin for HOD that shows User fields + DeptID."""
     fieldsets = CustomUserAdmin.fieldsets + (
         ('Department Info', {'fields': ('deptID',)}),
+        ('Budget Info', {'fields': ('total_department_budget',)}),
     )
     
 admin.site.register(User, CustomUserAdmin)

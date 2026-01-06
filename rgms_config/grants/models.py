@@ -2,7 +2,8 @@ from django.db import models
 from users.models import Researcher, Reviewer, HOD, User
 
 class Proposal(models.Model):
-    proposalID = models.AutoField(primary_key=True) 
+    proposalID = models.AutoField(primary_key=True)
+    requested_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.0) 
     title = models.CharField(max_length=255)
     pdf_file = models.FileField(upload_to='proposals/pdfs/', null=True, blank=True)
     submissionDate = models.DateField(auto_now_add=True) 
