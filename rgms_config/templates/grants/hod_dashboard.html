@@ -1,105 +1,66 @@
-{% extends 'base.html' %} {% block content %}
-<div
-  class="dashboard-header"
-  style="
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  "
->
-  <h2>HOD Management Dashboard</h2>
-  <span
-    class="badge"
-    style="
-      background: #2c3e50;
-      color: white;
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 0.8em;
-    "
-  >
-    Department: {{ user.hod.deptID }}
-  </span>
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2>HOD Management Dashboard</h2>
+    <span class="badge" style="background: #2c3e50; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.8em;">
+        Department: {{ user.hod.deptID }}
+    </span>
 </div>
 
 <div class="card">
-  <h3>Proposals Awaiting Final Decision</h3>
-  <p style="color: #7f8c8d; font-size: 0.9em; margin-bottom: 20px">
-    The following proposals have completed the review process and require your
-    approval to become active grants.
-  </p>
+    <h3>Proposals Awaiting Final Decision</h3>
+    <p style="color: #7f8c8d; font-size: 0.9em; margin-bottom: 20px;">
+        The following proposals have completed the review process and require your approval to become active grants.
+    </p>
 
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Project Title</th>
-        <th>Researcher</th>
-        <th>Proposal Document</th>
-        <th style="text-align: right">Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for proposal in proposals %}
-      <tr>
-        <td>#{{ proposal.proposalID }}</td>
-        <td><strong>{{ proposal.title }}</strong></td>
-        <td>
-          {{ proposal.researcher.username }}
-          <br /><small style="color: #95a5a6"
-            >{{ proposal.researcher.department }}</small
-          >
-        </td>
-        <td>
-          {% if proposal.pdf_file %}
-          <a
-            href="{{ proposal.pdf_file.url }}"
-            target="_blank"
-            class="btn btn-outline"
-            style="
-              border: 1px solid #2980b9;
-              color: #2980b9;
-              padding: 4px 10px;
-              font-size: 0.8em;
-            "
-          >
-            View PDF
-          </a>
-          {% else %}
-          <span style="color: #e74c3c; font-size: 0.85em"
-            >No file uploaded</span
-          >
-          {% endif %}
-        </td>
-        <td style="text-align: right">
-          <a
-            href="{% url 'approve_proposal' proposal.proposalID %}"
-            class="btn btn-primary"
-            style="background-color: #27ae60"
-          >
-            Review & Approve
-          </a>
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td
-          colspan="5"
-          style="text-align: center; padding: 40px; color: #95a5a6"
-        >
-          <p>No proposals are currently waiting for your decision.</p>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Project Title</th>
+                <th>Researcher</th>
+                <th>Proposal Document</th>
+                <th style="text-align: right;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for proposal in proposals %}
+            <tr>
+                <td>#{{ proposal.proposalID }}</td>
+                <td><strong>{{ proposal.title }}</strong></td>
+                <td>
+                    {{ proposal.researcher.username }}
+                    <br><small style="color: #95a5a6;">{{ proposal.researcher.department }}</small>
+                </td>
+                <td>
+                    {% if proposal.pdf_file %}
+                        <a href="{{ proposal.pdf_file.url }}" target="_blank" class="btn btn-outline" style="border: 1px solid #2980b9; color: #2980b9; padding: 4px 10px; font-size: 0.8em;">
+                            View PDF
+                        </a>
+                    {% else %}
+                        <span style="color: #e74c3c; font-size: 0.85em;">No file uploaded</span>
+                    {% endif %}
+                </td>
+                <td style="text-align: right;">
+                    <a href="{% url 'approve_proposal' proposal.proposalID %}" class="btn btn-primary" style="background-color: #27ae60;">
+                        Review & Approve
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 40px; color: #95a5a6;">
+                    <p>No proposals are currently waiting for your decision.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
-<div class="card" style="margin-top: 30px">
-  <h3>Currently Monitored Grants</h3>
-  <p style="color: #7f8c8d; font-size: 0.9em">
-    Overview of active research projects in your department.
-  </p>
-</div>
+<div class="card" style="margin-top: 30px;">
+    <h3>Currently Monitored Grants</h3>
+    <p style="color: #7f8c8d; font-size: 0.9em;">Overview of active research projects in your department.</p>
+    </div>
 {% endblock %}

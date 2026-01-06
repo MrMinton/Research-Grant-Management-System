@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Proposal, Grant, Budget
+from .models import Proposal, Grant, Budget, Evaluation
 from .forms import ProposalForm
 
 @login_required
@@ -73,7 +73,9 @@ def approve_proposal(request, proposal_id):
         return redirect('home')
 
     proposal = get_object_or_404(Proposal, pk=proposal_id)
+    evaluations = Evaluation.objects.filter(proposal=proposal)
 
+    
     if request.method == 'POST':
         proposal.status = 'Approved'
         proposal.save()
@@ -92,4 +94,4 @@ def approve_proposal(request, proposal_id):
 
         return redirect('hod_dashboard')
 
-    return render(request, 'grants/approve_form.html', {'proposal': proposal})
+    return render(request, 'grants/approve_form.html', {'proposal': proposal, 'evaluations': evaluations})
