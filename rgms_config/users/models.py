@@ -21,7 +21,14 @@ class Reviewer(User):
         verbose_name_plural = "Reviewers" 
 
 class HOD(User):
-    deptID = models.CharField(max_length=10) 
+    deptID = models.CharField(max_length=10)
+    
+    total_department_budget = models.DecimalField(
+        max_digits=15, 
+        decimal_places=2, 
+        default=500000.00, 
+        help_text="Total funds available for the department"
+    )
 
     class Meta:
         verbose_name = "HOD"
