@@ -39,6 +39,8 @@ urlpatterns = [
 
     # REVIEWER DASHBOARD URL
     path('reviewer/dashboard/', grant_views.reviewer_dashboard, name='reviewer_dashboard'),
+    # REVIEWER EVALUATE URL
+    path('reviewer/evaluate/<int:proposal_id>/', grant_views.evaluate_proposal, name='evaluate_proposal'),
 
     # --- RESEARCHER FEATURES ---
     # Register a new account

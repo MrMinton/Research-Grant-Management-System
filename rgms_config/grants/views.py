@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Proposal, Grant, Budget, Evaluation
-from .forms import ProposalForm
+from .forms import ProposalForm , EvaluationForm
 from decimal import Decimal
 
 @login_required
@@ -109,3 +109,33 @@ def approve_proposal(request, proposal_id):
 			return render(request, 'grants/approve_form.html', {'proposal': proposal, 'evaluations': evaluations, 'error_message': error_message, 'hod_budget': hod_user.total_department_budget})
 
 	return render(request, 'grants/approve_form.html', {'proposal': proposal, 'evaluations': evaluations, 'hod_budget': hod_user.total_department_budget})
+
+
+@login_required
+def evaluate_proposal(request, proposal_id):
+    # Security: Ensure only Reviewers can access
+    if request.user.role != 'Reviewer':
+        return redirect('home')
+
+    proposal = get_object_or_404(Proposal, pk=proposal_id)
+
+    if request.method == 'POST':
+        form = EvaluationForm(request.POST)
+        if form.is_valid():
+            evaluation = form.save(commit=False)
+            evaluation.proposal = proposal
+            evaluation.reviewer = request.user.reviewer # Link to Reviewer profile
+            evaluation.save()
+
+            # Update status so only HOD can receive it in their dashboard
+            proposal.status = 'Review Complete'
+            proposal.save()
+
+            return redirect('reviewer_dashboard')
+    else:
+        form = EvaluationForm()
+
+    return render(request, 'grants/evaluate_proposal.html', {
+        'form': form,
+        'proposal': proposal
+    })
