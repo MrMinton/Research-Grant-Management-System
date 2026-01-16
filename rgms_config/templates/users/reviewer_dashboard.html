@@ -31,15 +31,15 @@
             <td>{{ proposal.status }}</td>
             <td>
                     {% if proposal.pdf_file %}
-                        <a href="{{ proposal.pdf_file.url }}" target="_blank" class="btn btn-outline" style="border: 1px solid #2980b9; color: #2980b9; padding: 4px 10px; font-size: 0.8em;">
+                        <a href="{{ proposal.pdf_file.url }}" target="_blank" class="btn btn-primary">
                             View PDF
                         </a>
                     {% else %}
-                        <span style="color: #e74c3c; font-size: 0.85em;">No file uploaded</span>
+                        <span class="text-error">No file uploaded</span>
                     {% endif %}
                 </td>
             <td>
-                <a href="{% url 'evaluate_proposal' proposal.proposalID %}" class="btn btn-primary" style="padding: 5px 10px; text-decoration: none; display: inline-block;">
+                <a href="{% url 'evaluate_proposal' proposal.proposalID %}" class="btn btn-primary">
                     Evaluate
                 </a>
             </td>

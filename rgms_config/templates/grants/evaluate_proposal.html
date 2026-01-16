@@ -8,10 +8,11 @@
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <div style="margin-top: 20px;">
+        <div class="form-actions">
             <button type="submit" class="btn btn-primary">Submit Evaluation</button>
-            <a href="{% url 'reviewer_dashboard' %}" class="btn" style="background: #95a5a6; color: white;">Cancel</a>
+            <a href="{% url 'reviewer_dashboard' %}" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 </div>
 {% endblock %}
+

@@ -161,3 +161,24 @@ input[type="text"], input[type="password"], textarea, select {
     color: white;
     padding: 10px 20px;
 }
+
+.text-error {
+    color: #e74c3c;
+    font-size: 0.85em;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.form-actions {
+    margin-top: 20px;
+}
+
+.btn-secondary {
+    background: #95a5a6;
+    color: white;
+}
+.btn-secondary:hover {
+    background: #7f8c8d;
+}
