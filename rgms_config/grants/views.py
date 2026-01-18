@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Proposal, Grant, Budget, Evaluation
+from .models import Proposal, Grant, Budget, Evaluation, ProgressReport
 from .forms import ProposalForm
 from decimal import Decimal
 
@@ -109,3 +109,36 @@ def approve_proposal(request, proposal_id):
 			return render(request, 'grants/approve_form.html', {'proposal': proposal, 'evaluations': evaluations, 'error_message': error_message, 'hod_budget': hod_user.total_department_budget})
 
 	return render(request, 'grants/approve_form.html', {'proposal': proposal, 'evaluations': evaluations, 'hod_budget': hod_user.total_department_budget})
+
+@login_required
+def project_detail(request, grant_id):
+    if request.user.role != 'HOD':
+        return redirect('home')
+
+    grant = get_object_or_404(Grant, pk=grant_id)
+    proposal = grant.proposal
+
+    reports = ProgressReport.objects.filter(proposal=proposal).order_by('-submissionDate')
+
+    if request.method == 'POST':
+        action_request = request.POST.get('feedback')
+        status_flag = request.POST.get('status_flag')
+
+        if action_request:
+            ProgressReport.objects.create(
+                proposal=proposal,
+                content=f"HOD INTERVENTION: {action_request}",
+                milestonesAchieved="N/A - Intervention Log"
+            )
+            
+            proposal.status = status_flag
+            proposal.save()
+            
+            messages.success(request, f"Intervention sent for {proposal.title}.")
+            return redirect('hod_dashboard')
+
+    return render(request, 'grants/project_monitoring_detail.html', {
+        'grant': grant,
+        'proposal': proposal,
+        'reports': reports
+    })

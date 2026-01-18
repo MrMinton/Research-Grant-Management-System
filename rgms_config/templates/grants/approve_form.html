@@ -4,6 +4,8 @@
 <div class="card allocation-card">
     <h2>Approve Grant: {{ proposal.title }}</h2>
 
+	<h2> score</h2>
+	<p>Overall Score: {{ score }}/100</p>
     {% if error_message %}
         <div class="alert alert-error">
             <strong>Error:</strong> {{ error_message }}
