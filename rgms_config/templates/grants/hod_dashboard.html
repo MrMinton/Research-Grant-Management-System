@@ -3,10 +3,18 @@
 {% block content %}
 <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <h2>HOD Management Dashboard</h2>
-    <span class="badge" style="background: #2c3e50; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.8em;">
+    <span class="badge badge-info">
         Department: {{ user.hod.deptID }}
     </span>
 </div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
 
 <div class="card">
     <h3>Proposals Awaiting Final Decision</h3>
@@ -61,6 +69,43 @@
 
 <div class="card" style="margin-top: 30px;">
     <h3>Currently Monitored Grants</h3>
-    <p style="color: #7f8c8d; font-size: 0.9em;">Overview of active research projects in your department.</p>
-    </div>
+    <p style="color: #7f8c8d; font-size: 0.9em; margin-bottom: 20px;">Overview of active research projects and their adherence status.</p>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Grant ID</th>
+                <th>Project Title</th>
+                <th>Researcher</th>
+                <th>Status</th>
+                <th style="text-align: right;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for grant in active_grants %}
+            <tr>
+                <td>#{{ grant.grantID }}</td>
+                <td><strong>{{ grant.proposal.title }}</strong></td>
+                <td>{{ grant.proposal.researcher.username }}</td>
+                <td>
+                    <span class="badge {% if grant.proposal.status == 'Needs Intervention' %}badge-danger{% else %}badge-success{% endif %}">
+                        {{ grant.proposal.status }}
+                    </span>
+                </td>
+                <td style="text-align: right;">
+                    <a href="{% url 'project_detail' grant.grantID %}" class="btn btn-review">
+                        Review KPIs
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 40px; color: #95a5a6;">
+                    <p>No active grants are currently being monitored.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
