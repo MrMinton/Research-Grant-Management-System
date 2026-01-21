@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card">
+    <div class="dashboard-header">
+        <h2>Financial Tracker: {{ grant.proposal.title }}</h2>
+        <span class="badge {% if alert_triggered %}badge-danger{% else %}badge-success{% endif %}">
+            Status: {% if alert_triggered %}CRITICAL{% else %}Stable{% endif %}
+        </span>
+    </div>
+
+    <div class="date-grid kpi-section-margin">
+        <div class="budget-status-box">
+            <h4>Total Allocated</h4>
+            <p class="metric-large">${{ grant.totalAllocatedAmount }}</p>
+        </div>
+        
+        <div class="budget-status-box {% if alert_triggered %}status-critical{% else %}status-safe{% endif %}">
+            <h4>Remaining Balance</h4>
+            <p class="metric-large">${{ budget.remainingBalance }}</p>
+            <small class="text-muted-small">Spent: ${{ totalspent }} ({{ usage_percent }}%)</small>
+        </div>
+    </div>
+
+    <div class="progress-track">
+        <div class="progress-fill {% if alert_triggered %}progress-critical{% else %}progress-safe{% endif %}" 
+             style="width: {{ usage_percent }}%;">
+            {{ usage_percent }}% Used
+        </div>
+    </div>
+
+    <hr>
+
+    <form method="post" class="intervention-form">
+        {% csrf_token %}
+        <h3>Adjust Allocation</h3>
+        <p class="section-description">
+            Your Department Balance: <strong>${{ hod_budget }}</strong>
+        </p>
+        
+        <div class="form-group">
+            <label>Top-Up Amount ($):</label>
+            <input type="number" name="top_up_amount" step="0.01" class="form-input-full" placeholder="0.00">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-approve">Authorize Funds</button>
+        <a href="{% url 'hod_dashboard' %}" class="btn btn-cancel">Return to Dashboard</a>
+    </form>
+</div>
+{% endblock %}

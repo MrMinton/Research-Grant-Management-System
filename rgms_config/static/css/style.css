@@ -216,3 +216,46 @@ input[type="text"], input[type="password"], textarea, select {
 .btn-cancel:hover {
     background-color: #7f8c8d;
 }
+
+.metric-large {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 5px 0;
+}
+
+/* Status Colors for Budget Boxes */
+.status-safe {
+    border-left-color: #27ae60 !important; /* Green override */
+}
+
+.status-critical {
+    border-left-color: #e74c3c !important; /* Red override */
+}
+
+/* Progress Bar Container */
+.progress-track {
+    background-color: #eee;
+    border-radius: 10px;
+    height: 25px;
+    margin-bottom: 30px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* The actual bar that fills up */
+.progress-fill {
+    height: 100%;
+    text-align: center;
+    color: white;
+    line-height: 25px;
+    font-size: 0.8em;
+    transition: width 0.5s ease-in-out;
+}
+
+.progress-safe {
+    background-color: #2980b9; /* Blue */
+}
+
+.progress-critical {
+    background-color: #e74c3c; /* Red */
+}
