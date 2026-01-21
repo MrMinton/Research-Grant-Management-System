@@ -45,10 +45,14 @@ urlpatterns = [
     path('register/', user_views.register_researcher, name='register'),
     
     # The Researcher Dashboard
-    path('dashboard/', grant_views.researcher_dashboard, name='researcher_dashboard'),
+    # Changed path AND name to be 100% unique
+    path('researcher/dashboard/', grant_views.researcher_dashboard, name='researcher_dashboard'),
     
     # Submit a new proposal
     path('submit-proposal/', grant_views.submit_proposal, name='submit_proposal'),
+
+    path('grant/<int:proposal_id>/', grant_views.grant_detail, name='grant_detail'),    
+    path('grant/report/<int:proposal_id>/', grant_views.submit_report, name='submit_report'),
 
 	# --- HOD FEATURES ---
 	path('hod/dashboard/', grant_views.hod_dashboard, name='hod_dashboard'),

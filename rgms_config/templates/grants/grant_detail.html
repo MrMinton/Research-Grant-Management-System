@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="header-flex">
+        <h2 class="hero-title">Grant Details: {{ proposal.title }}</h2>
+        
+        <a href="{% url 'researcher_dashboard' %}" class="btn" 
+           style="color: white; border: 1px solid rgba(255,255,255,0.4); background: rgba(0,0,0,0.1);">
+           &larr; Back
+        </a>
+    </div>
+
+    <div class="card">
+        <h3>Overview</h3>
+        <div class="info-grid">
+            <div><strong>Grant ID:</strong> #{{ grant.grantID }}</div>
+            <div><strong>Allocated:</strong> ${{ grant.totalAllocatedAmount }}</div>
+            <div><strong>Spent:</strong> ${{ budget.totalSpent }}</div>
+            <div>
+                <a href="{% url 'submit_report' proposal.proposalID %}" class="btn btn-primary">Submit Report</a>
+            </div>
+        </div>
+
+        <h3>Budget Usage</h3>
+        <div class="progress-container">
+            <div class="progress-fill {% if usage_percent > 90 %}bg-danger{% else %}bg-success{% endif %}" 
+                 style="width: {{ usage_percent }}%;">  
+                 {{ usage_percent }}%
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+        <h3>Report History</h3>
+        <ul>
+        {% for report in proposal.progressreport_set.all %}
+            <li><strong>{{ report.submissionDate }}:</strong> {{ report.milestonesAchieved }}</li>
+        {% empty %}
+            <li>No reports submitted yet.</li>
+        {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Submit Progress Report</h2>
+<p>Project: {{ proposal.title }}</p>
+
+<div class="card">
+    <form method="POST">
+        {% csrf_token %}
+        <p>
+            <label>Milestones Achieved:</label><br>
+            {{ form.milestonesAchieved }}
+        </p>
+        <p>
+            <label>Detailed Content:</label><br>
+            {{ form.content }}
+        </p>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+{% endblock %}
