@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h2>Project KPI Review: {{ proposal.title }}</h2>
+    
+    <div class="date-grid kpi-section-margin">
+        <div class="budget-status-box">
+            <h4>Timeline Adherence</h4>
+            <p>Ends: {{ grant.endDate }}</p>
+        </div>
+        
+        <div class="request-info-box kpi-completion-box">
+            <h4>Completion Percentage</h4>
+            <p>Calculated Progress: <strong>75%</strong></p> 
+        </div>
+    </div>
+
+    <h3>Recent Progress Reports</h3>
+    {% for report in reports %}
+        <div class="evaluation-item">
+            <small>{{ report.submissionDate }}</small>
+            <p><strong>Achieved:</strong> {{ report.milestonesAchieved }}</p>
+            <p>{{ report.content }}</p>
+        </div>
+    {% empty %}
+        <p>No reports submitted yet.</p>
+    {% endfor %}
+
+    <hr>
+
+    <form method="post" class="intervention-form">
+        {% csrf_token %}
+        <h3>Intervention / Feedback</h3>
+        <div class="form-group">
+            <label>Set Status Flag:</label>
+            <select name="status_flag" class="form-input-full">
+                <option value="Approved">On Track</option>
+                <option value="Needs Intervention">Needs Intervention</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Action Required / Feedback:</label>
+            <textarea name="feedback" rows="4" placeholder="Enter instructions for the researcher..."></textarea>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-intervention">Send Intervention</button>
+        <a href="{% url 'hod_dashboard' %}" class="btn btn-cancel">Return to Project List</a>
+    </form>
+</div>
+{% endblock %}

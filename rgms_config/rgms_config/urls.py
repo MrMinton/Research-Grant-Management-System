@@ -55,6 +55,8 @@ urlpatterns = [
 	# --- HOD FEATURES ---
 	path('hod/dashboard/', grant_views.hod_dashboard, name='hod_dashboard'),
     path('hod/approve/<int:proposal_id>/', grant_views.approve_proposal, name='approve_proposal'),
+    path('hod/monitor/<int:grant_id>/', grant_views.project_detail, name='project_detail'),
+    path('hod/budget/<int:grant_id>/', grant_views.track_budget, name='track_budget'),
 ]
 
 if settings.DEBUG:
