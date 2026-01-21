@@ -1,36 +1,16 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="card allocation-card">
-    <h2>Approve Grant: {{ proposal.title }}</h2>
+<div class="allocation-card card">
+    <h2>Approve Proposal: {{ proposal.title }}</h2>
 
-	<h2> score</h2>
-	<p>Overall Score: {{ score }}/100</p>
     {% if error_message %}
         <div class="alert alert-error">
-            <strong>Error:</strong> {{ error_message }}
+            {{ error_message }}
         </div>
     {% endif %}
-
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    <div class="budget-status-box">
-        <h4 style="margin-top: 0;">Department Funds Status</h4>
-        <p style="margin: 0; font-size: 1.1em;">
-            Available Balance: <strong>RM{{ hod_budget }}</strong>
-        </p>
-    </div>
-
-    <form method="post">
-        {% csrf_token %}
-        
-        <h3>Reviewer Evaluations</h3>
+	
+	<h3>Reviewer Evaluations</h3>
         {% for evaluation in evaluations %}
             <div class="evaluation-item">
                 <strong>Reviewer:</strong> {{ evaluation.reviewer.username }}<br />
@@ -41,35 +21,51 @@
         {% empty %}
             <p style="color: #7f8c8d;">No evaluations available for this proposal.</p>
         {% endfor %}
+		
+    <div class="budget-status-box">
+        <h4>Budget Overview</h4>
+        <p>Your Department Balance: <strong>${{ hod_budget }}</strong></p>
+        <p>Researcher Requested: <strong>$<span id="requested-val">{{ proposal.requested_amount }}</span></strong></p>
+    </div>
 
-        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-
-        <div class="request-info-box">
-            <p style="margin: 0;"><strong>Researcher Requested Amount:</strong> RM{{ proposal.requested_amount }}</p>
-        </div>
-
+    <form method="post" onsubmit="return confirmAllocation()">
+        {% csrf_token %}
+        
         <div class="form-group">
-            <label>Final Authorized Amount (RM):</label>
-            <input type="number" name="amount" step="0.01" required 
-                   placeholder="Enter final allocation" class="form-input-full">
+            <label>Allocation Amount ($):</label>
+            <input type="number" name="amount" id="allocation-input" 
+                   value="{{ proposal.requested_amount }}" step="0.01" class="form-input-full">
         </div>
 
         <div class="date-grid">
-            <div class="form-group">
+            <div>
                 <label>Start Date:</label>
-                <input type="date" name="start_date" required class="form-input-full">
+                <input type="date" name="start_date" class="form-input-full" required>
             </div>
-
-            <div class="form-group">
+            <div>
                 <label>End Date:</label>
-                <input type="date" name="end_date" required class="form-input-full">
+                <input type="date" name="end_date" class="form-input-full" required>
             </div>
         </div>
 
-        <div style="margin-top: 25px;">
-            <button type="submit" class="btn btn-primary btn-confirm">Confirm Allocation & Approve</button>
-            <a href="{% url 'hod_dashboard' %}" class="btn btn-cancel">Cancel</a>
-        </div>
+        <button type="submit" class="btn btn-confirm">Confirm & Approve</button>
+        <a href="{% url 'hod_dashboard' %}" class="btn btn-cancel">Cancel</a>
     </form>
 </div>
+
+<script>
+function confirmAllocation() {
+    // Get values as numbers
+    var requested = parseFloat(document.getElementById('requested-val').innerText);
+    var allocated = parseFloat(document.getElementById('allocation-input').value);
+
+    // Check if allocated is higher than requested
+    if (allocated > requested) {
+        return confirm("WARNING: You are allocating $" + allocated + 
+                       ", which is MORE than the requested $" + requested + 
+                       ".\n\nAre you sure you want to proceed?");
+    }
+    return true; 
+}
+</script>
 {% endblock %}

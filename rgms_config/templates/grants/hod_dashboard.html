@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+<div class="dashboard-header">
     <h2>HOD Management Dashboard</h2>
-    <span class="badge badge-info">
+    <span class="badge badge-department">
         Department: {{ user.hod.deptID }}
     </span>
 </div>
@@ -18,7 +18,7 @@
 
 <div class="card">
     <h3>Proposals Awaiting Final Decision</h3>
-    <p style="color: #7f8c8d; font-size: 0.9em; margin-bottom: 20px;">
+    <p class="section-description">
         The following proposals have completed the review process and require your approval to become active grants.
     </p>
 
@@ -39,26 +39,26 @@
                 <td><strong>{{ proposal.title }}</strong></td>
                 <td>
                     {{ proposal.researcher.username }}
-                    <br><small style="color: #95a5a6;">{{ proposal.researcher.department }}</small>
+                    <br><small class="text-muted-small">{{ proposal.researcher.department }}</small>
                 </td>
                 <td>
                     {% if proposal.pdf_file %}
-                        <a href="{{ proposal.pdf_file.url }}" target="_blank" class="btn btn-outline" style="border: 1px solid #2980b9; color: #2980b9; padding: 4px 10px; font-size: 0.8em;">
+                        <a href="{{ proposal.pdf_file.url }}" target="_blank" class="btn btn-outline-sm">
                             View PDF
                         </a>
                     {% else %}
-                        <span style="color: #e74c3c; font-size: 0.85em;">No file uploaded</span>
+                        <span class="text-error-small">No file uploaded</span>
                     {% endif %}
                 </td>
                 <td style="text-align: right;">
-                    <a href="{% url 'approve_proposal' proposal.proposalID %}" class="btn btn-primary" style="background-color: #27ae60;">
+                    <a href="{% url 'approve_proposal' proposal.proposalID %}" class="btn btn-primary btn-approve">
                         Review & Approve
                     </a>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" style="text-align: center; padding: 40px; color: #95a5a6;">
+                <td colspan="5" class="empty-state">
                     <p>No proposals are currently waiting for your decision.</p>
                 </td>
             </tr>
@@ -67,9 +67,9 @@
     </table>
 </div>
 
-<div class="card" style="margin-top: 30px;">
+<div class="card monitoring-card">
     <h3>Currently Monitored Grants</h3>
-    <p style="color: #7f8c8d; font-size: 0.9em; margin-bottom: 20px;">Overview of active research projects and their adherence status.</p>
+    <p class="section-description">Overview of active research projects and their adherence status.</p>
     
     <table>
         <thead>
@@ -96,11 +96,15 @@
                     <a href="{% url 'project_detail' grant.grantID %}" class="btn btn-review">
                         Review KPIs
                     </a>
+                    
+                    <a href="{% url 'track_budget' grant.grantID %}" class="btn btn-outline-sm" style="margin-left: 5px;">
+                        $ Budget
+                    </a>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" style="text-align: center; padding: 40px; color: #95a5a6;">
+                <td colspan="5" class="empty-state">
                     <p>No active grants are currently being monitored.</p>
                 </td>
             </tr>
