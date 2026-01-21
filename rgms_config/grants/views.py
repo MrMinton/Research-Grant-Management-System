@@ -2,38 +2,104 @@ from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Proposal, Grant, Budget, Evaluation, ProgressReport
-from .forms import ProposalForm
+from .forms import ProposalForm, ProgressReportForm
 from decimal import Decimal
+from django.db.models import Max
+
 
 @login_required
 def researcher_dashboard(request):
-    # Security: Only Researchers should see this
     if request.user.role != 'Researcher':
         return redirect('home') 
     
-    # Get the specific researcher profile linked to this user
-    researcher_profile = request.user.researcher
+    # Get proposals for this specific researcher
+    my_proposals = Proposal.objects.filter(researcher=request.user.researcher).order_by('-submissionDate')
     
-    # Get only proposals that belong to THIS researcher
-    my_proposals = Proposal.objects.filter(researcher=researcher_profile)
-    
-    return render(request, 'grants/dashboard.html', {'proposals': my_proposals})
+    return render(request, 'grants/researcher_dashboard.html', {'proposals': my_proposals})
 
 @login_required
 def submit_proposal(request):
     if request.user.role != 'Researcher':
         return redirect('home')
-	
+    
     if request.method == 'POST':
-        form = ProposalForm(request.POST)
+        form = ProposalForm(request.POST, request.FILES)
         if form.is_valid():
-            proposal = form.save(commit=False)
-            proposal.researcher = request.user.researcher
-            proposal.save()
+            new_proposal = form.save(commit=False)
+            new_proposal.researcher = request.user.researcher
+            
+            # --- LOGIC: VERSION CONTROL ---
+            # Check if a proposal with this title already exists for this user
+            existing_proposals = Proposal.objects.filter(
+                researcher=request.user.researcher, 
+                title=new_proposal.title
+            )
+            
+            if existing_proposals.exists():
+                # Find the highest version number
+                current_max = existing_proposals.aggregate(Max('version'))['version__max']
+                new_proposal.version = current_max + 0.1  # Increment version (e.g., 1.0 -> 1.1)
+                messages.info(request, f"New version {new_proposal.version:.1f} created.")
+            else:
+                new_proposal.version = 1.0 # First submission
+
+            new_proposal.save()
             return redirect('researcher_dashboard')
     else:
         form = ProposalForm()
     return render(request, 'grants/submit_proposal.html', {'form': form})
+
+@login_required
+def grant_detail(request, proposal_id):
+    """
+    Displays the Grant Budget and Progress Bar.
+    """
+    if request.user.role != 'Researcher':
+        return redirect('home')
+
+    proposal = get_object_or_404(Proposal, pk=proposal_id)
+    
+    # Logic: Calculate Budget Percentage
+    usage_percent = 0
+    grant = None
+    budget = None
+
+    try:
+        grant = proposal.grant
+        budget = grant.budget
+        if grant.totalAllocatedAmount > 0:
+            usage_percent = (budget.totalSpent / grant.totalAllocatedAmount) * 100
+    except (Grant.DoesNotExist, Budget.DoesNotExist):
+        pass # It's okay if they don't exist yet
+
+    return render(request, 'grants/grant_detail.html', {
+        'proposal': proposal,
+        'grant': grant,
+        'budget': budget,
+        'usage_percent': round(usage_percent, 1)
+    })
+
+@login_required
+def submit_report(request, proposal_id):
+    if request.user.role != 'Researcher':
+        return redirect('home')
+
+    proposal = get_object_or_404(Proposal, pk=proposal_id)
+
+    if request.method == 'POST':
+        form = ProgressReportForm(request.POST)
+        if form.is_valid():
+            report = form.save(commit=False)
+            report.proposal = proposal
+            report.save()
+            messages.success(request, "Progress report submitted successfully.")
+            return redirect('grant_detail', proposal_id=proposal.proposalID)
+    else:
+        form = ProgressReportForm()
+
+    return render(request, 'grants/submit_report.html', {'form': form, 'proposal': proposal})
+
+
 
 @login_required
 def reviewer_dashboard(request):

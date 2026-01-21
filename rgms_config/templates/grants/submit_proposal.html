@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card" style="max-width: 700px; margin: 40px auto;">
+    <h2 style="margin-bottom: 20px;">Submit Research Proposal</h2>
+    
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div style="margin-bottom: 20px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 5px;">Project Title</label>
+            {{ form.title }}
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 5px;">Proposal Document (PDF)</label>
+            {{ form.pdf_file }}
+            <small style="color: grey; display: block; margin-top: 5px;">Upload the full proposal documentation.</small>
+        </div>
+
+        <div style="text-align: right; margin-top: 30px;">
+            <a href="{% url 'researcher_dashboard' %}" class="btn btn-secondary" style="margin-right: 10px;">Cancel</a>
+            <button type="submit" class="btn btn-primary">Submit Proposal</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
