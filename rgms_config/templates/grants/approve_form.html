@@ -9,7 +9,19 @@
             {{ error_message }}
         </div>
     {% endif %}
-
+	
+	<h3>Reviewer Evaluations</h3>
+        {% for evaluation in evaluations %}
+            <div class="evaluation-item">
+                <strong>Reviewer:</strong> {{ evaluation.reviewer.username }}<br />
+                <strong>Comments:</strong>
+                <p>{{ evaluation.feedbackComments }}</p>
+                <strong>Rating:</strong> {{ evaluation.score }}/100
+            </div>
+        {% empty %}
+            <p style="color: #7f8c8d;">No evaluations available for this proposal.</p>
+        {% endfor %}
+		
     <div class="budget-status-box">
         <h4>Budget Overview</h4>
         <p>Your Department Balance: <strong>${{ hod_budget }}</strong></p>
