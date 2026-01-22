@@ -33,12 +33,61 @@
 
     <div class="card" style="margin-top: 20px;">
         <h3>Report History</h3>
-        <ul>
-        {% for report in proposal.progressreport_set.all %}
-            <li><strong>{{ report.submissionDate }}:</strong> {{ report.milestonesAchieved }}</li>
-        {% empty %}
-            <li>No reports submitted yet.</li>
-        {% endfor %}
+        <ul style="list-style: none; padding: 0;">
+            {% for report in reports %}
+                <li style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                    <div style="font-size: 0.85rem; color: #6b7280; margin-bottom: 5px;">
+                        {{ report.submissionDate }}
+                    </div>
+
+                    {% if "URGENT INTERVENTION" in report.content or "HOD INTERVENTION" in report.content %}
+                        <div style="
+                            background-color: #fef2f2; 
+                            border-left: 4px solid #ef4444; 
+                            color: #b91c1c; 
+                            padding: 10px; 
+                            border-radius: 4px;
+                        ">
+                            <strong>⚠ ACTION REQUIRED:</strong><br>
+                            
+                            <div style="font-weight: 800; color: #7f1d1d; margin-top: 5px; margin-bottom: 2px;">
+                                {{ report.milestonesAchieved }}
+                            </div>
+                            
+                            <div style="font-size: 0.95rem;">{{ report.content }}</div>
+                        </div>
+
+                    {% elif "HOD FEEDBACK" in report.content %}
+                        <div style="
+                            background-color: #eff6ff; 
+                            border-left: 4px solid #3b82f6; 
+                            color: #1d4ed8; 
+                            padding: 10px; 
+                            border-radius: 4px;
+                        ">
+                            <strong>ℹ HOD Update:</strong><br>
+                            
+                            <div style="font-weight: 800; color: #1e3a8a; margin-top: 5px; margin-bottom: 2px;">
+                                {{ report.milestonesAchieved }}
+                            </div>
+                            
+                            <div style="font-size: 0.95rem;">{{ report.content }}</div>
+                        </div>
+
+                    {% else %}
+                        <div>
+                            <span style="color: #4b5563; font-weight: 600;">Milestones:</span> 
+                            <span style="color: #111827; font-weight: 600;">{{ report.milestonesAchieved }}</span>
+                            <br>
+                            <span style="color: #374151; display: block; margin-top: 4px;">
+                                {{ report.content }}
+                            </span>
+                        </div>
+                    {% endif %}
+                </li>
+            {% empty %}
+                <li style="color: grey;">No reports found.</li>
+            {% endfor %}
         </ul>
     </div>
 </div>

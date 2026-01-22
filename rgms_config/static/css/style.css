@@ -337,3 +337,9 @@ label {
     font-weight: 700;
     letter-spacing: 0.5px;
 }
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.75; }
+    100% { opacity: 1; }
+}
