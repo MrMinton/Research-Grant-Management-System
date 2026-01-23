@@ -362,7 +362,7 @@ label {
     font-size: 2rem;
     font-weight: 700;
     margin-bottom: 5px;
-	color: white;
+    color: white;
 }
 
 /* 2. KPI Cards (Grid Layout) */
@@ -604,4 +604,122 @@ nav.scrolled {
     border: 1px solid #d1d5db;
     border-radius: 8px;
     background-color: white;
+}
+
+/* =========================================
+   ISOLATED NOTIFICATION UI (NEW)
+   ========================================= */
+
+.rgms-notif-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-right: 25px; /* Spaces it from the "Hello, User" text */
+}
+
+.rgms-notif-bell {
+    cursor: pointer;
+    position: relative;
+    padding: 5px;
+    transition: transform 0.2s;
+    line-height: 1;
+}
+
+.rgms-notif-bell:hover {
+    transform: rotate(15deg);
+}
+
+/* The red dot indicator */
+.rgms-notif-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 8px;
+    height: 8px;
+    background-color: #ef4444; 
+    border-radius: 50%;
+    border: 1px solid #1e3a8a; /* Matches your navbar color */
+}
+
+/* The Dropdown Container */
+.rgms-notif-dropdown {
+    display: none; 
+    position: absolute;
+    top: 45px;
+    right: -10px;
+    width: 280px;
+    background-color: #ffffff;
+    border-radius: 12px; /* Matches your modern card radius */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    z-index: 10000;
+    border: 1px solid #e5e7eb;
+    color: #1f2937;
+}
+
+.rgms-notif-dropdown.show {
+    display: block;
+    animation: rgmsFadeIn 0.15s ease-out;
+}
+
+@keyframes rgmsFadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dropdown Header */
+.rgms-notif-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.rgms-notif-count {
+    background-color: #f3f4f6;
+    color: #4b5563;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+/* The "Such Empty" State */
+.rgms-notif-empty {
+    text-align: center;
+    padding: 30px 15px;
+    color: #6b7280;
+}
+
+.rgms-notif-empty p {
+    margin: 5px 0 0 0;
+    font-style: italic;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.rgms-notif-empty small {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+/* Mark as Read Button */
+.rgms-notif-mark-read {
+    display: block;
+    text-align: center;
+    padding: 12px;
+    background-color: #f9fafb;
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-top: 1px solid #e5e7eb;
+    border-radius: 0 0 12px 12px;
+    transition: background-color 0.2s;
+}
+
+.rgms-notif-mark-read:hover {
+    background-color: #f3f4f6;
+    color: #1d4ed8;
 }
