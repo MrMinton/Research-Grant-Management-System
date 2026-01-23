@@ -5,6 +5,8 @@ from .models import Proposal, Grant, Budget, Evaluation, ProgressReport
 from .forms import ProposalForm, ProgressReportForm, EvaluationForm
 from decimal import Decimal
 from django.db.models import Max
+from django.db.models import Sum, Count
+from django.db.models import Max
 
 
 @login_required
@@ -265,6 +267,7 @@ def project_detail(request, grant_id):
 
     grant = get_object_or_404(Grant, pk=grant_id)
     proposal = grant.proposal
+
     reports = ProgressReport.objects.filter(proposal=proposal).order_by('-submissionDate')
 
     if request.method == 'POST':
@@ -351,6 +354,36 @@ def track_budget(request, grant_id):
         'usage_percent': round(usage_percent, 1),
         'alert_triggered': alert_triggered,
         'hod_budget': request.user.hod.total_department_budget
+    })
+
+
+@login_required
+def hod_analytics(request):
+    if request.user.role != 'HOD':
+        return redirect('home')
+
+    # --- CALCULATE TOTALS ---
+    funding_data = Grant.objects.aggregate(total=Sum('totalAllocatedAmount'))
+    spending_data = Budget.objects.aggregate(total=Sum('totalSpent'))
+    
+    total_funding = funding_data['total'] or 0
+    total_spent = spending_data['total'] or 0
+    remaining_funds = request.user.hod.total_department_budget - total_spent
+
+    # --- CALCULATE RATES ---
+    total_props = Proposal.objects.count()
+    approved_props = Proposal.objects.filter(status='Approved').count()
+    
+    if total_props > 0:
+        approval_rate = round((approved_props / total_props) * 100, 1)
+    else:
+        approval_rate = 0
+
+    return render(request, 'grants/hod_analytics.html', {
+        'total_spent': float(total_spent),
+        'remaining_funds': float(remaining_funds),
+        'approval_rate': approval_rate,
+        'rejection_rate': 100 - approval_rate
     })
 
 

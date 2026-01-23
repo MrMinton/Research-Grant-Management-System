@@ -1,65 +1,120 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="allocation-card card">
-    <h2>Approve Proposal: {{ proposal.title }}</h2>
 
-    {% if error_message %}
-        <div class="alert alert-error">
-            {{ error_message }}
-        </div>
-    {% endif %}
-	
-	<h3>Reviewer Evaluations</h3>
-        {% for evaluation in evaluations %}
-            <div class="evaluation-item">
-                <strong>Reviewer:</strong> {{ evaluation.reviewer.username }}<br />
-                <strong>Comments:</strong>
-                <p>{{ evaluation.feedbackComments }}</p>
-                <strong>Rating:</strong> {{ evaluation.score }}/100
-            </div>
-        {% empty %}
-            <p style="color: #7f8c8d;">No evaluations available for this proposal.</p>
-        {% endfor %}
-		
-    <div class="budget-status-box">
-        <h4>Budget Overview</h4>
-        <p>Your Department Balance: <strong>${{ hod_budget }}</strong></p>
-        <p>Researcher Requested: <strong>$<span id="requested-val">{{ proposal.requested_amount }}</span></strong></p>
+<div class="hod-hero-header">
+    <div>
+        <h2 class="hod-hero-title">Grant Approval Decision</h2>
+        <p style="opacity: 0.9; margin: 0; font-size: 1.1rem;">{{ proposal.title }}</p>
+    </div>
+    
+    <div>
+        <span class="badge" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); padding: 8px 15px;">
+            ID: #{{ proposal.proposalID }}
+        </span>
+    </div>
+</div>
+
+<div class="hod-kpi-grid">
+    <div class="hod-kpi-card" style="background: #eff6ff; border: 1px solid #dbeafe;">
+        <div class="hod-kpi-label">Department Reserve</div>
+        <div class="hod-kpi-value" style="color: #1e40af;">${{ hod_budget }}</div>
+        <div class="text-muted" style="font-size: 0.9rem;">Available Funds</div>
     </div>
 
-    <form method="post" onsubmit="return confirmAllocation()">
-        {% csrf_token %}
-        
-        <div class="form-group">
-            <label>Allocation Amount ($):</label>
-            <input type="number" name="amount" id="allocation-input" 
-                   value="{{ proposal.requested_amount }}" step="0.01" class="form-input-full">
+    <div class="hod-kpi-card">
+        <div class="hod-kpi-label">Requested Amount</div>
+        <div class="hod-kpi-value" style="color: #374151;">
+            $<span id="requested-val">{{ proposal.requested_amount }}</span>
         </div>
+        <div class="text-muted" style="font-size: 0.9rem;">By {{ proposal.researcher.username }}</div>
+    </div>
+</div>
 
-        <div class="date-grid">
-            <div>
-                <label>Start Date:</label>
-                <input type="date" name="start_date" class="form-input-full" required>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card" style="height: 100%;">
+            <div class="card-header">
+                Reviewer Evaluations
             </div>
-            <div>
-                <label>End Date:</label>
-                <input type="date" name="end_date" class="form-input-full" required>
+            <div class="card-body">
+                {% for evaluation in evaluations %}
+                    <div style="border-bottom: 1px solid #e5e7eb; padding-bottom: 15px; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <strong style="color: #1f2937;">{{ evaluation.reviewer.username }}</strong>
+                            <span class="badge {% if evaluation.score >= 70 %}badge-success{% else %}badge-warning{% endif %}">
+                                Score: {{ evaluation.score }}
+                            </span>
+                        </div>
+                        <p style="color: #4b5563; font-size: 0.95rem; font-style: italic; margin: 0;">
+                            "{{ evaluation.feedbackComments }}"
+                        </p>
+                    </div>
+                {% empty %}
+                    <div style="text-align: center; color: #9ca3af; padding: 30px;">
+                        <p>No reviewer evaluations found.</p>
+                        <small>You can still approve this proposal at your discretion.</small>
+                    </div>
+                {% endfor %}
             </div>
         </div>
+    </div>
 
-        <button type="submit" class="btn btn-confirm">Confirm & Approve</button>
-        <a href="{% url 'hod_dashboard' %}" class="btn btn-cancel">Cancel</a>
-    </form>
+    <div class="col-md-6">
+        <div class="card" style="border-top: 5px solid #10b981;"> <div class="card-header" style="background-color: #ecfdf5; color: #065f46; font-weight: 600;">
+                Authorize Grant Allocation
+            </div>
+            <div class="card-body">
+                
+                {% if error_message %}
+                    <div class="alert alert-danger">{{ error_message }}</div>
+                {% endif %}
+
+                <form method="post" onsubmit="return confirmAllocation()">
+                    {% csrf_token %}
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-weight: 600; color: #374151; margin-bottom: 5px; display: block;">
+                            Allocation Amount ($)
+                        </label>
+                        <input type="number" name="amount" id="allocation-input" 
+                               value="{{ proposal.requested_amount }}" step="0.01" 
+                               style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1.1rem;">
+                        <small class="text-muted">You may adjust this amount if necessary.</small>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
+                        <div>
+                            <label style="font-weight: 600; color: #374151;">Start Date</label>
+                            <input type="date" name="start_date" required 
+                                   style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                        </div>
+                        <div>
+                            <label style="font-weight: 600; color: #374151;">End Date</label>
+                            <input type="date" name="end_date" required 
+                                   style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn btn-primary btn-sm" style="text-decoration: none;">
+                            ✔ Confirm & Approve
+                        </button>
+                        <a href="{% url 'hod_dashboard' %}" class="btn btn-secondary" style="padding: 10px 20px;">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
 function confirmAllocation() {
-    // Get values as numbers
     var requested = parseFloat(document.getElementById('requested-val').innerText);
     var allocated = parseFloat(document.getElementById('allocation-input').value);
 
-    // Check if allocated is higher than requested
     if (allocated > requested) {
         return confirm("WARNING: You are allocating $" + allocated + 
                        ", which is MORE than the requested $" + requested + 
@@ -68,4 +123,5 @@ function confirmAllocation() {
     return true; 
 }
 </script>
+
 {% endblock %}
