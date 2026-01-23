@@ -256,10 +256,6 @@ input[type="text"], input[type="password"], textarea, select {
     background-color: #2980b9; /* Blue */
 }
 
-<<<<<<< Updated upstream
-.progress-critical {
-    background-color: #e74c3c; /* Red */
-=======
 .progress-fill.bg-danger { 
     background-color: #ef4444; /* Vivid Red */
     color: white;
@@ -559,5 +555,4 @@ nav.scrolled {
     border: 1px solid #d1d5db;
     border-radius: 8px;
     background-color: white;
->>>>>>> Stashed changes
 }

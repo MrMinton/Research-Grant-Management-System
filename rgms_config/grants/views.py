@@ -221,8 +221,6 @@ def track_budget(request, grant_id):
         'usage_percent': round(usage_percent, 1),
         'alert_triggered': alert_triggered,
         'hod_budget': request.user.hod.total_department_budget
-<<<<<<< Updated upstream
-=======
     })
 
 @login_required
@@ -282,5 +280,4 @@ def evaluate_proposal(request, proposal_id):
     return render(request, 'grants/evaluate_proposal.html', {
         'form': form,
         'proposal': proposal
->>>>>>> Stashed changes
     })
