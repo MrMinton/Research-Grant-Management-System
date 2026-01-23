@@ -2,43 +2,166 @@ from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Proposal, Grant, Budget, Evaluation, ProgressReport
-from .forms import ProposalForm
+from .forms import ProposalForm, ProgressReportForm, EvaluationForm
 from decimal import Decimal
-<<<<<<< Updated upstream
-=======
 from django.db.models import Max
 from django.db.models import Sum, Count
->>>>>>> Stashed changes
+from django.db.models import Max
+
 
 @login_required
 def researcher_dashboard(request):
-    # Security: Only Researchers should see this
     if request.user.role != 'Researcher':
         return redirect('home') 
     
-    # Get the specific researcher profile linked to this user
-    researcher_profile = request.user.researcher
+    # 1. Fetch ALL proposals for this researcher
+    all_proposals = Proposal.objects.filter(researcher=request.user.researcher)
     
-    # Get only proposals that belong to THIS researcher
-    my_proposals = Proposal.objects.filter(researcher=researcher_profile)
+    # 2. FILTER: Keep only the latest version of each proposal (Group by Title)
+    latest_proposals_map = {}
     
-    return render(request, 'grants/dashboard.html', {'proposals': my_proposals})
+    for p in all_proposals:
+        # If we haven't seen this title yet, or if this version is higher than what we have stored
+        if p.title not in latest_proposals_map:
+            latest_proposals_map[p.title] = p
+        else:
+            if p.version > latest_proposals_map[p.title].version:
+                latest_proposals_map[p.title] = p
+
+    # Convert the dictionary back to a list and sort by Date (newest first)
+    my_proposals = sorted(latest_proposals_map.values(), key=lambda x: x.submissionDate, reverse=True)
+    
+    return render(request, 'grants/researcher_dashboard.html', {'proposals': my_proposals})
 
 @login_required
 def submit_proposal(request):
     if request.user.role != 'Researcher':
         return redirect('home')
-	
+    
     if request.method == 'POST':
-        form = ProposalForm(request.POST)
+        form = ProposalForm(request.POST, request.FILES)
         if form.is_valid():
-            proposal = form.save(commit=False)
-            proposal.researcher = request.user.researcher
-            proposal.save()
+            new_proposal = form.save(commit=False)
+            new_proposal.researcher = request.user.researcher
+            
+            # --- LOGIC: VERSION CONTROL ---
+            # Check if a proposal with this title already exists for this user
+            existing_proposals = Proposal.objects.filter(
+                researcher=request.user.researcher, 
+                title=new_proposal.title
+            )
+            
+            if existing_proposals.exists():
+                # Find the highest version number
+                current_max = existing_proposals.aggregate(Max('version'))['version__max']
+                new_proposal.version = current_max + 0.1  # Increment version (e.g., 1.0 -> 1.1)
+                messages.info(request, f"New version {new_proposal.version:.1f} created.")
+            else:
+                new_proposal.version = 1.0 # First submission
+
+            new_proposal.save()
             return redirect('researcher_dashboard')
     else:
         form = ProposalForm()
     return render(request, 'grants/submit_proposal.html', {'form': form})
+
+@login_required
+def resubmit_proposal(request, proposal_id):
+    if request.user.role != 'Researcher':
+        return redirect('home')
+        
+    # Get the original proposal to pre-fill data
+    original_proposal = get_object_or_404(Proposal, pk=proposal_id)
+    
+    if request.method == 'POST':
+        form = ProposalForm(request.POST, request.FILES)
+        if form.is_valid():
+            new_proposal = form.save(commit=False)
+            new_proposal.researcher = request.user.researcher
+            
+            # FORCE match the title so versioning logic works
+            new_proposal.title = original_proposal.title
+            
+            # CALCULATE NEW VERSION
+            # Find all proposals with this title to get the absolute max version
+            existing_proposals = Proposal.objects.filter(
+                researcher=request.user.researcher, 
+                title=original_proposal.title
+            )
+            current_max = existing_proposals.aggregate(Max('version'))['version__max']
+            new_proposal.version = current_max + 0.1
+            
+            # Reset status for review
+            new_proposal.status = 'Pending'
+            
+            new_proposal.save()
+            messages.success(request, f"Version {new_proposal.version:.1f} submitted successfully! It has replaced the old version on your dashboard.")
+            return redirect('researcher_dashboard')
+    else:
+        # Pre-fill form
+        form = ProposalForm(initial={
+            'title': original_proposal.title,
+            'requested_amount': original_proposal.requested_amount
+        })
+
+    return render(request, 'grants/submit_proposal.html', {
+        'form': form, 
+        'original_proposal': original_proposal
+    })
+
+@login_required
+def grant_detail(request, proposal_id):
+    if request.user.role != 'Researcher':
+        return redirect('home')
+
+    proposal = get_object_or_404(Proposal, pk=proposal_id)
+    
+    # 1. FIX: Fetch reports explicitly sorted by Newest First (-submissionDate)
+    # We also sort by -reportID to ensure even reports on the same day stay in order
+    reports = proposal.progressreport_set.all().order_by('-submissionDate', '-reportID')
+    
+    # Logic: Calculate Budget Percentage
+    usage_percent = 0
+    grant = None
+    budget = None
+
+    try:
+        grant = proposal.grant
+        budget = grant.budget
+        if grant.totalAllocatedAmount > 0:
+            usage_percent = (budget.totalSpent / grant.totalAllocatedAmount) * 100
+    except (Grant.DoesNotExist, Budget.DoesNotExist):
+        pass 
+
+    return render(request, 'grants/grant_detail.html', {
+        'proposal': proposal,
+        'grant': grant,
+        'budget': budget,
+        'usage_percent': round(usage_percent, 1),
+        'reports': reports # 2. Pass the sorted list to the template
+    })
+
+@login_required
+def submit_report(request, proposal_id):
+    if request.user.role != 'Researcher':
+        return redirect('home')
+
+    proposal = get_object_or_404(Proposal, pk=proposal_id)
+
+    if request.method == 'POST':
+        form = ProgressReportForm(request.POST)
+        if form.is_valid():
+            report = form.save(commit=False)
+            report.proposal = proposal
+            report.save()
+            messages.success(request, "Progress report submitted successfully.")
+            return redirect('grant_detail', proposal_id=proposal.proposalID)
+    else:
+        form = ProgressReportForm()
+
+    return render(request, 'grants/submit_report.html', {'form': form, 'proposal': proposal})
+
+
 
 @login_required
 def reviewer_dashboard(request):
@@ -48,7 +171,8 @@ def reviewer_dashboard(request):
 
     # 2. Get proposals. 
     # Reviewers should see everything that is NOT a 'Draft'.
-    proposals_to_review = Proposal.objects.exclude(status='Draft')
+
+    proposals_to_review = Proposal.objects.all()
 
     context = {
         'proposals': proposals_to_review
@@ -148,19 +272,28 @@ def project_detail(request, grant_id):
 
     if request.method == 'POST':
         action_request = request.POST.get('feedback')
-        status_flag = request.POST.get('status_flag')
+        status_flag = request.POST.get('status_flag') # e.g., 'On Track' or 'Needs Intervention'
 
         if action_request:
+            # 1. LOGIC: Choose the prefix based on the status
+            if status_flag == 'Needs Intervention':
+                prefix = "URGENT INTERVENTION"
+                milestone_text = "⚠ Status set to Needs Intervention"
+            else:
+                prefix = "HOD FEEDBACK"
+                milestone_text = f"✔ Status set to {status_flag}"
+
+            # 2. Create the Report with the correct label
             ProgressReport.objects.create(
                 proposal=proposal,
-                content=f"HOD INTERVENTION: {action_request}",
-                milestonesAchieved="N/A - Intervention Log"
+                content=f"{prefix}: {action_request}",
+                milestonesAchieved=milestone_text 
             )
             
             proposal.status = status_flag
             proposal.save()
             
-            messages.success(request, f"Intervention sent for {proposal.title}.")
+            messages.success(request, f"Feedback sent and status updated to {status_flag}.")
             return redirect('hod_dashboard')
 
     return render(request, 'grants/project_monitoring_detail.html', {
@@ -223,6 +356,7 @@ def track_budget(request, grant_id):
         'hod_budget': request.user.hod.total_department_budget
     })
 
+
 @login_required
 def hod_analytics(request):
     if request.user.role != 'HOD':
@@ -251,6 +385,7 @@ def hod_analytics(request):
         'approval_rate': approval_rate,
         'rejection_rate': 100 - approval_rate
     })
+
 
 @login_required
 def evaluate_proposal(request, proposal_id):

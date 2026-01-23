@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card" style="max-width: 700px; margin: 40px auto;">
+    <h2 style="margin-bottom: 20px;">
+        {% if is_resubmit %}Resubmit{% else %}Submit{% endif %} Research Proposal
+    </h2>
+    
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div style="margin-bottom: 20px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 5px;">Project Title</label>
+            {{ form.title }}
+        </div>
+
+        <div style="margin-bottom: 25px;">
+            <label style="font-weight: 700; display: block; margin-bottom: 8px; color: #374151;">
+                Requested Budget
+            </label>
+            
+            <div style="display: flex; align-items: center; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; background-color: #fff;" 
+                 onmouseover="this.style.borderColor='#9ca3af'" onmouseout="this.style.borderColor='#d1d5db'">
+                
+                <span style="background-color: #f3f4f6; color: #6b7280; padding: 12px 16px; font-weight: 600; border-right: 1px solid #d1d5db;">RM</span>
+                
+                <div style="flex-grow: 1;">
+                    {{ form.requested_amount }}
+                </div>
+            </div>
+            <small style="color: #9ca3af; margin-top: 5px; display: block; font-size: 0.85rem;">
+                Enter the total grant amount required for this project phase.
+            </small>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 5px;">Proposal Document (PDF)</label>
+            {{ form.pdf_file }}
+            <small style="color: grey; display: block; margin-top: 5px;">Upload the full proposal documentation.</small>
+        </div>
+
+        <div style="text-align: right; margin-top: 30px;">
+            <a href="{% url 'researcher_dashboard' %}" class="btn btn-secondary" style="margin-right: 10px;">Cancel</a>
+            <button type="submit" class="btn btn-primary">Submit Proposal</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

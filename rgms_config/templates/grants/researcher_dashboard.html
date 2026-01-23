@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="header-flex">
+        <h2 class="hero-title">My Proposals</h2>
+        
+        <a href="{% url 'submit_proposal' %}" class="btn btn-primary" 
+           style="
+             border: 1px solid rgba(255,255,255,0.4); 
+             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+           ">
+           + New Proposal
+        </a>
+    </div>
+
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Date Submitted</th>
+                    <th>Version</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in proposals %}
+                <tr>
+                    <td><strong>{{ p.title }}</strong></td>
+                    <td>{{ p.submissionDate }}</td>
+                    <td>
+                        <span class="badge" style="background-color: #e5e7eb; color: #374151;">v{{ p.version|floatformat:1 }}</span>
+                    </td>
+                    <td>
+                        {% if p.status == 'Approved' %}
+                            <span class="badge bg-success">Approved</span>
+                        
+                        {% elif p.status == 'Rejected' %}
+                            <span class="badge bg-danger">Rejected</span>
+                        
+                        {% elif p.status == 'Needs Intervention' %}
+                            <span class="badge bg-danger" style="animation: pulse 2s infinite;">⚠ Needs Intervention</span>
+
+                        {% elif p.status == 'Draft' or p.status == 'Pending' %}
+                            <span class="badge bg-warning text-dark">{{ p.status }}</span>
+                        
+                        {% else %}
+                            <span class="badge bg-info text-dark">{{ p.status }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if p.status == 'Approved' or p.status == 'Needs Intervention' %}
+                            <a href="{% url 'grant_detail' p.proposalID %}" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.85rem;">
+                                View Grant
+                            </a>
+                        {% else %}
+                            <a href="{% url 'resubmit_proposal' p.proposalID %}" class="btn btn-secondary" 
+                               style="padding: 6px 12px; font-size: 0.85rem; border: 1px solid #d1d5db; color: #374151;">
+                                ↻ Resubmit
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: grey;">
+                        You have not submitted any proposals yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
