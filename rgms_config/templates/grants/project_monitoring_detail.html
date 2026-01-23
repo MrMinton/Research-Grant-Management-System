@@ -1,50 +1,108 @@
 {% extends 'base.html' %}
+
 {% block content %}
-<div class="card">
-    <h2>Project KPI Review: {{ proposal.title }}</h2>
+
+<div class="hod-hero-header">
+    <div>
+        <h2 class="hod-hero-title">Project KPI Review</h2>
+        <p style="opacity: 0.9; margin: 0; font-size: 1.1rem;">{{ proposal.title }}</p>
+    </div>
     
-    <div class="date-grid kpi-section-margin">
-        <div class="budget-status-box">
-            <h4>Timeline Adherence</h4>
-            <p>Ends: {{ grant.endDate }}</p>
+    <div>
+        <span class="badge {% if proposal.status == 'Needs Intervention' %}bg-danger{% else %}bg-success{% endif %}" 
+              style="font-size: 1rem; padding: 10px 20px; border: 2px solid rgba(255,255,255,0.3);">
+            {{ proposal.status }}
+        </span>
+    </div>
+</div>
+
+<div class="hod-kpi-grid">
+    <div class="hod-kpi-card">
+        <div class="hod-kpi-label">Project Timeline</div>
+        <div class="hod-kpi-value" style="color: #4b5563; font-size: 1.8rem;">
+            {{ grant.endDate|date:"M d, Y" }}
         </div>
-        
-        <div class="request-info-box kpi-completion-box">
-            <h4>Completion Percentage</h4>
-            <p>Calculated Progress: <strong>75%</strong></p> 
+        <div class="text-muted" style="font-size: 0.9rem;">Target Completion Date</div>
+    </div>
+
+    <div class="hod-kpi-card">
+        <div class="hod-kpi-label">Milestone Completion</div>
+        <div class="hod-kpi-value" style="color: #2563eb;">
+            75%
+        </div>
+        <div class="text-muted" style="font-size: 0.9rem;">Based on approved reports</div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header">
+                Progress History
+            </div>
+            <div class="card-body">
+                <div class="timeline-container">
+                    {% for report in reports %}
+                    <div class="timeline-item">
+                        <div class="timeline-date">{{ report.submissionDate|date:"F d, Y" }}</div>
+                        <div class="timeline-content">
+                            <div style="font-weight: 600; color: #1f2937; margin-bottom: 5px;">
+                                Milestone: {{ report.milestonesAchieved }}
+                            </div>
+                            <p style="margin: 0; color: #4b5563; font-size: 0.95rem;">
+                                {{ report.content }}
+                            </p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div style="text-align: center; color: #9ca3af; padding: 20px;">
+                        <p>No progress reports have been submitted yet.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     </div>
 
-    <h3>Recent Progress Reports</h3>
-    {% for report in reports %}
-        <div class="evaluation-item">
-            <small>{{ report.submissionDate }}</small>
-            <p><strong>Achieved:</strong> {{ report.milestonesAchieved }}</p>
-            <p>{{ report.content }}</p>
-        </div>
-    {% empty %}
-        <p>No reports submitted yet.</p>
-    {% endfor %}
+    <div class="col-md-5">
+        <div class="card intervention-card">
+            <div class="card-header" style="background-color: #fff7ed; color: #9a3412; font-weight: 600;">
+                Managerial Action
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label class="form-label-bold">Update Project Status:</label>
+                        <select name="status_flag" class="custom-select">
+                            <option value="On Track" {% if proposal.status == 'On Track' %}selected{% endif %}>
+                                ✔ On Track (Approve)
+                            </option>
+                            <option value="Needs Intervention" {% if proposal.status == 'Needs Intervention' %}selected{% endif %}>
+                                ⚠ Needs Intervention (Flag)
+                            </option>
+                        </select>
+                    </div>
 
-    <hr>
+                    <div style="margin-bottom: 25px;">
+                        <label class="form-label-bold">Feedback / Instructions:</label>
+                        <textarea name="feedback" class="custom-textarea" placeholder="Provide specific instructions for the researcher..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-sm" style="text-decoration: none;">
+                        Submit Decision
+                    </button>
+                </form>
+            </div>
+        </div>
 
-    <form method="post" class="intervention-form">
-        {% csrf_token %}
-        <h3>Intervention / Feedback</h3>
-        <div class="form-group">
-            <label>Set Status Flag:</label>
-            <select name="status_flag" class="form-input-full">
-                <option value="Approved">On Track</option>
-                <option value="Needs Intervention">Needs Intervention</option>
-            </select>
+        <div style="margin-top: 20px; text-align: center;">
+            <a href="{% url 'hod_dashboard' %}" class="btn btn-primary btn-sm" style="text-decoration: none;">
+                &larr; Return to Dashboard
+            </a>
         </div>
-        <div class="form-group">
-            <label>Action Required / Feedback:</label>
-            <textarea name="feedback" rows="4" placeholder="Enter instructions for the researcher..."></textarea>
-        </div>
-        
-        <button type="submit" class="btn btn-primary btn-intervention">Send Intervention</button>
-        <a href="{% url 'hod_dashboard' %}" class="btn btn-cancel">Return to Project List</a>
-    </form>
+    </div>
 </div>
+
 {% endblock %}

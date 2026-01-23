@@ -23,6 +23,13 @@ class Grant(models.Model):
 
 	def __str__(self):
 		return f"Grant: {self.proposal.title} ({self.proposal.status})"
+	
+	def get_usage_percent(self):
+            # Check if budget exists and avoid division by zero
+		if hasattr(self, 'budget') and self.totalAllocatedAmount > 0:
+			percent = (self.budget.totalSpent / self.totalAllocatedAmount) * 100
+			return min(int(percent), 100) # Cap at 100 for the bar width
+		return 0
 
 class Budget(models.Model):
 	budgetID = models.AutoField(primary_key=True) 

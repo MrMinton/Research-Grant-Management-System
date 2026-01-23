@@ -4,6 +4,11 @@ from django.contrib.auth.decorators import login_required
 from .models import Proposal, Grant, Budget, Evaluation, ProgressReport
 from .forms import ProposalForm
 from decimal import Decimal
+<<<<<<< Updated upstream
+=======
+from django.db.models import Max
+from django.db.models import Sum, Count
+>>>>>>> Stashed changes
 
 @login_required
 def researcher_dashboard(request):
@@ -216,4 +221,66 @@ def track_budget(request, grant_id):
         'usage_percent': round(usage_percent, 1),
         'alert_triggered': alert_triggered,
         'hod_budget': request.user.hod.total_department_budget
+<<<<<<< Updated upstream
+=======
+    })
+
+@login_required
+def hod_analytics(request):
+    if request.user.role != 'HOD':
+        return redirect('home')
+
+    # --- CALCULATE TOTALS ---
+    funding_data = Grant.objects.aggregate(total=Sum('totalAllocatedAmount'))
+    spending_data = Budget.objects.aggregate(total=Sum('totalSpent'))
+    
+    total_funding = funding_data['total'] or 0
+    total_spent = spending_data['total'] or 0
+    remaining_funds = request.user.hod.total_department_budget - total_spent
+
+    # --- CALCULATE RATES ---
+    total_props = Proposal.objects.count()
+    approved_props = Proposal.objects.filter(status='Approved').count()
+    
+    if total_props > 0:
+        approval_rate = round((approved_props / total_props) * 100, 1)
+    else:
+        approval_rate = 0
+
+    return render(request, 'grants/hod_analytics.html', {
+        'total_spent': float(total_spent),
+        'remaining_funds': float(remaining_funds),
+        'approval_rate': approval_rate,
+        'rejection_rate': 100 - approval_rate
+    })
+
+@login_required
+def evaluate_proposal(request, proposal_id):
+    # Security: Ensure only Reviewers can access
+    if request.user.role != 'Reviewer':
+        return redirect('home')
+
+    proposal = get_object_or_404(Proposal, pk=proposal_id)
+
+    if request.method == 'POST':
+        form = EvaluationForm(request.POST)
+        if form.is_valid():
+            evaluation = form.save(commit=False)
+            evaluation.proposal = proposal
+            evaluation.reviewer = request.user.reviewer # Link to Reviewer profile
+            evaluation.save()
+
+            # Update status so HOD can see it
+            proposal.status = 'Review Complete'
+            proposal.save()
+
+            messages.success(request, f"Evaluation submitted for {proposal.title}.")
+            return redirect('reviewer_dashboard')
+    else:
+        form = EvaluationForm()
+
+    return render(request, 'grants/evaluate_proposal.html', {
+        'form': form,
+        'proposal': proposal
+>>>>>>> Stashed changes
     })

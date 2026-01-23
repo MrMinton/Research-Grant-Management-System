@@ -1,50 +1,105 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="card">
-    <div class="dashboard-header">
-        <h2>Financial Tracker: {{ grant.proposal.title }}</h2>
-        <span class="badge {% if alert_triggered %}badge-danger{% else %}badge-success{% endif %}">
-            Status: {% if alert_triggered %}CRITICAL{% else %}Stable{% endif %}
+
+<div class="hod-hero-header">
+    <div>
+        <h2 class="hod-hero-title">Financial Tracker</h2>
+        <p style="opacity: 0.9; margin: 0; font-size: 1.1rem;">{{ grant.proposal.title }}</p>
+    </div>
+    
+    <div>
+        <span class="badge {% if alert_triggered %}bg-danger{% else %}bg-success{% endif %}" 
+              style="font-size: 1rem; padding: 10px 20px; border: 2px solid rgba(255,255,255,0.3);">
+            {% if alert_triggered %}CRITICAL OVERSPEND{% else %}BUDGET HEALTHY{% endif %}
         </span>
     </div>
-
-    <div class="date-grid kpi-section-margin">
-        <div class="budget-status-box">
-            <h4>Total Allocated</h4>
-            <p class="metric-large">${{ grant.totalAllocatedAmount }}</p>
-        </div>
-        
-        <div class="budget-status-box {% if alert_triggered %}status-critical{% else %}status-safe{% endif %}">
-            <h4>Remaining Balance</h4>
-            <p class="metric-large">${{ budget.remainingBalance }}</p>
-            <small class="text-muted-small">Spent: ${{ totalspent }} ({{ usage_percent }}%)</small>
-        </div>
-    </div>
-
-    <div class="progress-track">
-        <div class="progress-fill {% if alert_triggered %}progress-critical{% else %}progress-safe{% endif %}" 
-             style="width: {{ usage_percent }}%;">
-            {{ usage_percent }}% Used
-        </div>
-    </div>
-
-    <hr>
-
-    <form method="post" class="intervention-form">
-        {% csrf_token %}
-        <h3>Adjust Allocation</h3>
-        <p class="section-description">
-            Your Department Balance: <strong>${{ hod_budget }}</strong>
-        </p>
-        
-        <div class="form-group">
-            <label>Top-Up Amount ($):</label>
-            <input type="number" name="top_up_amount" step="0.01" class="form-input-full" placeholder="0.00">
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-approve">Authorize Funds</button>
-        <a href="{% url 'hod_dashboard' %}" class="btn btn-cancel">Return to Dashboard</a>
-    </form>
 </div>
+
+<div class="hod-kpi-grid">
+    <div class="hod-kpi-card">
+        <div style="font-size: 0.85rem; text-transform: uppercase; color: #6b7280; font-weight: 600;">
+            Total Grant Allocation
+        </div>
+        <div style="font-size: 2.5rem; font-weight: 700; color: #2563eb; margin: 10px 0;">
+            ${{ grant.totalAllocatedAmount }}
+        </div>
+        <div class="text-muted" style="font-size: 0.9rem;">Initial Approved Amount</div>
+    </div>
+
+    <div class="hod-kpi-card {% if alert_triggered %}border-critical{% else %}border-healthy{% endif %}">
+        <div style="font-size: 0.85rem; text-transform: uppercase; color: #6b7280; font-weight: 600;">
+            Remaining Balance
+        </div>
+        <div style="font-size: 2.5rem; font-weight: 700; color: #1f2937; margin: 10px 0;">
+            ${{ budget.remainingBalance }}
+        </div>
+        <div class="text-muted" style="font-size: 0.9rem;">Total Spent: ${{ budget.totalSpent }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        Expenditure Analysis
+    </div>
+    <div class="card-body">
+        
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: 600; color: #4b5563;">
+            <span>0%</span>
+            <span>Current Usage: {{ usage_percent }}%</span>
+            <span>100%</span>
+        </div>
+
+        <div class="hod-progress-track">
+            <div class="hod-progress-fill {% if alert_triggered %}bar-critical{% else %}bar-healthy{% endif %}" 
+                 style="width: {{ usage_percent }}%;">
+                 {% if usage_percent > 10 %}{{ usage_percent }}%{% endif %}
+            </div>
+        </div>
+
+        <p style="color: #6b7280; font-size: 0.95rem; margin-top: 15px;">
+            {% if alert_triggered %}
+                <strong style="color: #dc2626;">⚠ Warning:</strong> This project has exceeded the 90% safety threshold.
+            {% else %}
+                <strong style="color: #059669;">✔ On Track:</strong> Spending is within the expected range.
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 30px;">
+    <div class="card-header" style="background-color: #f3f4f6; color: #374151;">
+        Fund Management
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h4 style="margin: 0; font-size: 1.1rem; color: #1f2937;">Inject Additional Funds</h4>
+                <span class="badge badge-info" style="font-size: 0.9rem;">
+                    Dept Reserve: ${{ hod_budget }}
+                </span>
+            </div>
+
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <div style="flex-grow: 1;">
+                    <input type="number" name="top_up_amount" step="0.01" class="form-control" placeholder="Enter Amount (e.g. 5000.00)" required style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="padding: 10px 25px;">Authorize Top-Up</button>
+            </div>
+            
+            <p style="font-size: 0.85rem; color: #9ca3af; margin-top: 10px;">
+                * Funds will be immediately transferred from the Department Reserve to this Grant ID.
+            </p>
+        </form>
+    </div>
+</div>
+
+<div style="margin: 30px 0 50px 0;">
+    <a href="{% url 'hod_dashboard' %}" class="btn btn-primary btn-sm" style="text-decoration: none;">
+        &larr; Return to Dashboard
+    </a>
+</div>
+
 {% endblock %}

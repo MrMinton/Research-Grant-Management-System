@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="hod-hero-header">
+    <div>
+        <h2 class="hod-hero-title">Department Analytics</h2>
+        <p style="color: rgba(255,255,255,0.9); margin: 0;">Detailed performance metrics & budget breakdown</p>
+    </div>
+    
+    <div>
+        <a href="{% url 'hod_dashboard' %}" class="btn btn-light" style="font-weight: 600; color: #ffff;">
+            &larr; Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                Department Budget Utilization
+            </div>
+            <div class="card-body" style="height: 400px; display: flex; align-items: center; justify-content: center;">
+                <canvas id="budgetChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                Proposal Success Metrics
+            </div>
+            <div class="card-body" style="height: 400px; display: flex; align-items: center; justify-content: center;">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div> -->
+</div>
+
+<div class="hod-kpi-grid">
+    <div class="hod-kpi-card">
+        <div class="hod-kpi-label">Total Spent</div>
+        <div class="hod-kpi-value text-danger">${{ total_spent }}</div>
+    </div>
+    <div class="hod-kpi-card">
+        <div class="hod-kpi-label">Remaining Funds</div>
+        <div class="hod-kpi-value text-success">${{ remaining_funds }}</div>
+    </div>
+</div>
+
+{{ total_spent|json_script:"data-spent" }}
+{{ remaining_funds|json_script:"data-remaining" }}
+{{ approval_rate|json_script:"data-approval" }}
+{{ rejection_rate|json_script:"data-rejection" }}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const getVal = (id) => JSON.parse(document.getElementById(id).textContent || 0);
+
+        const valSpent = getVal('data-spent');
+        const valRemaining = getVal('data-remaining');
+        const valApproval = getVal('data-approval');
+        const valRejection = getVal('data-rejection');
+
+        // Budget Chart
+        const budgetCanvas = document.getElementById('budgetChart');
+        if (budgetCanvas) {
+            new Chart(budgetCanvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Spent Funds', 'Remaining Budget'],
+                    datasets: [{
+                        data: [valSpent, valRemaining],
+                        backgroundColor: ['#ef4444', '#10b981'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // Status Chart
+        const statusCanvas = document.getElementById('statusChart');
+        if (statusCanvas) {
+            new Chart(statusCanvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Approved', 'Rejected/Other'],
+                    datasets: [{
+                        label: 'Proposals (%)',
+                        data: [valApproval, valRejection],
+                        backgroundColor: ['#2563eb', '#9ca3af'],
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, max: 100 } }
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}
