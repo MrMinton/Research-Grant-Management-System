@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -269,6 +270,19 @@ def project_detail(request, grant_id):
     proposal = grant.proposal
 
     reports = ProgressReport.objects.filter(proposal=proposal).order_by('-submissionDate')
+	# --- NEW: CALCULATE TIME ELAPSED % ---
+    today = timezone.now().date()
+    total_days = (grant.endDate - grant.startDate).days
+    elapsed_days = (today - grant.startDate).days
+
+    if total_days > 0:
+        time_progress = round((elapsed_days / total_days) * 100)
+    else:
+        time_progress = 100 
+    
+    # Ensure it stays between 0% and 100%
+    time_progress = max(0, min(100, time_progress))
+    
 
     if request.method == 'POST':
         action_request = request.POST.get('feedback')
@@ -299,7 +313,8 @@ def project_detail(request, grant_id):
     return render(request, 'grants/project_monitoring_detail.html', {
         'grant': grant,
         'proposal': proposal,
-        'reports': reports
+        'reports': reports,
+        'time_progress': time_progress
     })
 
 @login_required
