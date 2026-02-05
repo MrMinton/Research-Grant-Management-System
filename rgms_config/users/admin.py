@@ -16,9 +16,17 @@ class HODAdmin(CustomUserAdmin):
         ('Budget Info', {'fields': ('total_department_budget',)}),
     )
     
+# --- Admin for Researcher ---
+class ResearcherAdmin(CustomUserAdmin):
+    """Specific Admin for Researcher that shows User fields + Dept + Interests."""
+    fieldsets = CustomUserAdmin.fieldsets + (
+        ('Researcher Details', {'fields': ('department', 'researchinterests')}),
+    )
+    list_display = ['username', 'email', 'department', 'role'] 
+
 admin.site.register(User, CustomUserAdmin)
 
 # Register the profile models
 admin.site.register(HOD, HODAdmin) 
 admin.site.register(Reviewer, UserAdmin)
-admin.site.register(Researcher, UserAdmin)
+admin.site.register(Researcher, ResearcherAdmin)

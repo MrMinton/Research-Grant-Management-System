@@ -8,6 +8,7 @@ from decimal import Decimal
 from django.db.models import Max
 from django.db.models import Sum, Count
 from django.db.models import Max
+from users.models import Notification
 
 
 @login_required
@@ -248,6 +249,13 @@ def approve_proposal(request, proposal_id):
             
             proposal.status = 'Approved'
             proposal.save()
+
+            # --- NOTIFICATION TRIGGER ---
+            Notification.objects.create(
+                recipient=proposal.researcher,
+                message=f"Good news! Your proposal '{proposal.title}' has been APPROVED.",
+                link=f"/grant/{proposal.proposalID}/"
+            )
                 
             messages.success(request, 'Proposal approved and grant created successfully.')
             return redirect('hod_dashboard')
@@ -293,9 +301,13 @@ def project_detail(request, grant_id):
             if status_flag == 'Needs Intervention':
                 prefix = "URGENT INTERVENTION"
                 milestone_text = "⚠ Status set to Needs Intervention"
+                # More alarming notification message
+                notif_msg = f"URGENT: HOD requires intervention on '{proposal.title}'. See feedback."
             else:
                 prefix = "HOD FEEDBACK"
                 milestone_text = f"✔ Status set to {status_flag}"
+                # Standard notification message
+                notif_msg = f"Update: HOD sent feedback for '{proposal.title}': {status_flag}"
 
             # 2. Create the Report with the correct label
             ProgressReport.objects.create(
@@ -306,6 +318,13 @@ def project_detail(request, grant_id):
             
             proposal.status = status_flag
             proposal.save()
+
+            # --- NOTIFICATION TRIGGER ---
+            Notification.objects.create(
+                recipient=proposal.researcher,
+                message=notif_msg,
+                link=f"/grant/{proposal.proposalID}/"
+            )
             
             messages.success(request, f"Feedback sent and status updated to {status_flag}.")
             return redirect('hod_dashboard')
@@ -353,6 +372,13 @@ def track_budget(request, grant_id):
                 
                 hod_user.total_department_budget -= additional_funds
                 hod_user.save()
+
+                # --- NOTIFICATION 3: BUDGET TOP-UP ---
+                Notification.objects.create(
+                    recipient=grant.proposal.researcher,
+                    message=f"Budget Alert: Top-up of RM{additional_funds} approved for '{grant.proposal.title}'.",
+                    link=f"/grant/{grant.proposal.proposalID}/"
+                )
                 
                 messages.success(request, f"Successfully added ${additional_funds} to the project budget.")
                 return redirect('track_budget', grant_id=grant.grantID)
@@ -421,6 +447,13 @@ def evaluate_proposal(request, proposal_id):
             # Update status so HOD can see it
             proposal.status = 'Review Complete'
             proposal.save()
+
+            # --- NOTIFICATION TRIGGER ---
+            Notification.objects.create(
+                recipient=proposal.researcher,
+                message=f"Update: A reviewer has evaluated '{proposal.title}'.",
+                link=f"/grant/{proposal.proposalID}/"
+            )
 
             messages.success(request, f"Evaluation submitted for {proposal.title}.")
             return redirect('reviewer_dashboard')

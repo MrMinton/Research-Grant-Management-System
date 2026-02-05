@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from .forms import ResearcherSignUpForm
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from .models import Notification
 
 def home(request):
     return render(request, 'home.html')
@@ -26,3 +29,10 @@ def dashboard_dispatch(request):
     elif request.user.role == 'HOD':
         return redirect('hod_dashboard')
     return redirect('home')
+
+@login_required
+@require_POST
+def mark_notifications_read(request):
+    """Marks all notifications for the user as read."""
+    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    return JsonResponse({'status': 'success'})

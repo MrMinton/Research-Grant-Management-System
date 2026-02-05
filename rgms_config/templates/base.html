@@ -48,23 +48,48 @@
                     <svg width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
                         <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zM8 1.918l-.797.161A4.002 4.002 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4.002 4.002 0 0 0-3.203-3.92L8 1.917zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5.002 5.002 0 0 1 13 6c0 .88.32 4.2 1.22 6z"/>
                     </svg>
-                    <span class="rgms-notif-badge"></span>
+                    {% if notif_count > 0 %}
+                        <span class="rgms-notif-badge">{{ notif_count }}</span>
+                    {% endif %}
                 </div>
 
                 <div class="rgms-notif-dropdown" id="rgmsNotifDropdown">
                     <div class="rgms-notif-header">
                         <span>Notifications</span>
-                        <span class="rgms-notif-count">0 New</span>
+                        <span class="rgms-notif-count">{{ notif_count }} New</span>
                     </div>
-                    <div class="rgms-notif-empty">
-                        <span style="font-size: 2rem;">🍃</span>
-                        <p>Such empty...</p>
-                        <small>You're all caught up!</small>
+                    
+                    <div class="rgms-notif-list">
+                        {% if notifications %}
+                            {% for notif in notifications %}
+                            <a href="{{ notif.link|default:'#' }}" class="rgms-notif-item {% if not notif.is_read %}unread{% endif %}">
+                                <div class="notif-icon">
+                                    {% if 'Approved' in notif.message %}✅{% elif 'Alert' in notif.message %}⚠️{% else %}ℹ️{% endif %}
+                                </div>
+                                <div class="notif-content">
+                                    <p>{{ notif.message }}</p>
+                                    <small>{{ notif.created_at|timesince }} ago</small>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        {% else %}
+                            <div class="rgms-notif-empty">
+                                <span style="font-size: 2rem;">🍃</span>
+                                <p>Such empty...</p>
+                                <small>You're all caught up!</small>
+                            </div>
+                        {% endif %}
                     </div>
-                    <a href="#" class="rgms-notif-mark-read">✓ Mark all as read</a>
+                    
+                    {% if notifications %}
+                        <div class="rgms-notif-footer">
+                            <button id="markAllReadBtn" class="rgms-notif-mark-read">✓ Mark all as read</button>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
             {% endif %}
+            
             <span class="user-welcome">
                 Hello, <strong>{{ user.username }}</strong>
             </span>
@@ -101,11 +126,9 @@
             const navbar = document.querySelector("nav");
 
             window.addEventListener("scroll", function() {
-                // If user scrolls down more than 50 pixels, turn navbar blue
                 if (window.scrollY > 50) {
                     navbar.classList.add("scrolled");
                 } else {
-                    // If back at the top, make it transparent
                     navbar.classList.remove("scrolled");
                 }
             });
@@ -113,6 +136,8 @@
             // Notification Bell Logic
             const bell = document.getElementById('rgmsNotifBell');
             const dropdown = document.getElementById('rgmsNotifDropdown');
+            const markReadBtn = document.getElementById('markAllReadBtn');
+
             if (bell && dropdown) {
                 bell.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -120,6 +145,38 @@
                 });
                 window.addEventListener('click', function() {
                     dropdown.classList.remove('show');
+                });
+                dropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+
+            // AJAX: Mark as Read
+            if (markReadBtn) {
+                markReadBtn.addEventListener('click', function() {
+                    fetch("{% url 'mark_notifications_read' %}", {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": "{{ csrf_token }}",
+                            "Content-Type": "application/json"
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // Remove the red badge
+                            const badge = document.querySelector('.rgms-notif-badge');
+                            if (badge) badge.remove();
+                            
+                            // Update "New" count text
+                            document.querySelector('.rgms-notif-count').textContent = "0 New";
+
+                            // Visually remove 'unread' styling
+                            document.querySelectorAll('.rgms-notif-item.unread').forEach(item => {
+                                item.classList.remove('unread');
+                            });
+                        }
+                    });
                 });
             }
         });
