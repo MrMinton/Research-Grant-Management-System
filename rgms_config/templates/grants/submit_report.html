@@ -47,6 +47,17 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="{{ form.expenditure_amount.id_for_label }}">Expenditure Amount</label>
+                    
+                    <div class="currency-group">
+                        <span class="currency-prefix">RM</span>
+                        {{ form.expenditure_amount }}
+                    </div>
+                    
+                    <small class="help-text">Total amount spent since the last report.</small>
+                </div>
+
+                <div class="form-group">
                     <label for="{{ form.content.id_for_label }}">Detailed Report Content</label>
                     {{ form.content }}
                 </div>

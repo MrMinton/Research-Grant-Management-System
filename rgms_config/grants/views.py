@@ -35,7 +35,7 @@ def researcher_dashboard(request):
     
     return render(request, 'grants/researcher_dashboard.html', {'proposals': my_proposals})
 
-@login_required
+login_required
 def submit_proposal(request):
     if request.user.role != 'Researcher':
         return redirect('home')
@@ -46,25 +46,30 @@ def submit_proposal(request):
             new_proposal = form.save(commit=False)
             new_proposal.researcher = request.user.researcher
             
-            # --- LOGIC: VERSION CONTROL ---
-            # Check if a proposal with this title already exists for this user
             existing_proposals = Proposal.objects.filter(
                 researcher=request.user.researcher, 
                 title=new_proposal.title
             )
             
             if existing_proposals.exists():
-                # Find the highest version number
                 current_max = existing_proposals.aggregate(Max('version'))['version__max']
-                new_proposal.version = current_max + 0.1  # Increment version (e.g., 1.0 -> 1.1)
-                messages.info(request, f"New version {new_proposal.version:.1f} created.")
+                new_proposal.version = current_max + 0.1 
+                messages.success(request, f"New version {new_proposal.version:.1f} submitted successfully!")
             else:
-                new_proposal.version = 1.0 # First submission
+                new_proposal.version = 1.0
+                messages.success(request, "Proposal submitted successfully!")
 
             new_proposal.save()
             return redirect('researcher_dashboard')
+        
+        else:
+            # --- ADDED: Error Feedback ---
+            messages.error(request, "Submission failed. Please check for file type or other errors.")
+            # -----------------------------
+            
     else:
         form = ProposalForm()
+        
     return render(request, 'grants/submit_proposal.html', {'form': form})
 
 @login_required
@@ -156,6 +161,22 @@ def submit_report(request, proposal_id):
             report = form.save(commit=False)
             report.proposal = proposal
             report.save()
+
+            # --- LOGIC: UPDATE BUDGET TOTAL SPENT ---
+            try:
+                # 1. Get the grant and budget associated with this proposal
+                grant = proposal.grant
+                budget = grant.budget
+                
+                # 2. Add the report's expenditure to the total spent
+                if report.expenditure_amount > 0:
+                    budget.totalSpent += report.expenditure_amount
+                    budget.save()
+                    
+            except (Grant.DoesNotExist, Budget.DoesNotExist):
+                # If for some reason grant/budget doesn't exist, ignore financial update
+                pass
+
             messages.success(request, "Progress report submitted successfully.")
             return redirect('grant_detail', proposal_id=proposal.proposalID)
     else:

@@ -96,10 +96,18 @@
             </table>
             {% else %}
             <div class="empty-state-container">
-                <div class="empty-icon">📂</div>
-                <h3>No Proposals Found</h3>
-                <p>Start your research journey by submitting a new proposal.</p>
-                <a href="{% url 'submit_proposal' %}" class="btn btn-primary mt-3">Create First Proposal</a>
+                <div class="empty-state-content">
+                    <div class="empty-icon-circle">
+                        <span class="empty-icon-emoji">🚀</span>
+                    </div>
+                    
+                    <h3>Ready to Launch Your Research?</h3>
+                    <p>You haven't submitted any proposals yet. Start your journey by creating your first grant application today.</p>
+                    
+                    <a href="{% url 'submit_proposal' %}" class="btn btn-primary-gradient btn-lg shadow-hover mt-3">
+                        + Create New Proposal
+                    </a>
+                </div>
             </div>
             {% endif %}
         </div>
