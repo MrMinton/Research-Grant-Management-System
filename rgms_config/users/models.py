@@ -16,6 +16,9 @@ class Researcher(User):
 
 class Reviewer(User):
     specialization = models.CharField(max_length=100)
+    models.CharField(max_length=100)
+    deptID = models.CharField(max_length=50, null=True, blank=True) 
+    researchinterests = models.TextField()
 
     class Meta:
         verbose_name = "Reviewer"
