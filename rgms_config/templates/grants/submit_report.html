@@ -1,21 +1,62 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<h2>Submit Progress Report</h2>
-<p>Project: {{ proposal.title }}</p>
+<div class="report-container">
+    
+    <div class="page-header">
+        <h1>Submit Progress Report</h1>
+        <p>Update the HOD and Reviewers on your milestones.</p>
+    </div>
 
-<div class="card">
-    <form method="POST">
-        {% csrf_token %}
-        <p>
-            <label>Milestones Achieved:</label><br>
-            {{ form.milestonesAchieved }}
-        </p>
-        <p>
-            <label>Detailed Content:</label><br>
-            {{ form.content }}
-        </p>
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
+    <div class="report-grid">
+        
+        <div class="project-summary-card">
+            <h3>Project Details</h3>
+            
+            <div class="summary-item">
+                <label>Project Title</label>
+                <p class="highlight-text">{{ proposal.title }}</p>
+            </div>
+
+            <div class="summary-item">
+                <label>Total Allocated</label>
+                <p>RM {{ proposal.grant.totalAllocatedAmount|default:"0.00" }}</p>
+            </div>
+
+            <div class="summary-item">
+                <label>Current Status</label>
+                <span class="status-badge {{ proposal.status|slugify }}">
+                    {{ proposal.status }}
+                </span>
+            </div>
+
+            <div class="summary-note">
+                <small>ℹ️ <strong>Tip:</strong> Be specific about milestones. This report will be visible to the HOD for budget monitoring.</small>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <form method="POST" class="styled-form">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="{{ form.milestonesAchieved.id_for_label }}">Milestones Achieved</label>
+                    {{ form.milestonesAchieved }}
+                    <small class="help-text">e.g., "Completed Phase 1 data collection"</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.content.id_for_label }}">Detailed Report Content</label>
+                    {{ form.content }}
+                </div>
+
+                <div class="form-actions">
+                    <a href="{% url 'grant_detail' proposal.proposalID %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Submit Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}

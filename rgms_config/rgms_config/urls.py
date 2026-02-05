@@ -64,6 +64,9 @@ urlpatterns = [
     path('hod/monitor/<int:grant_id>/', grant_views.project_detail, name='project_detail'),
     path('hod/budget/<int:grant_id>/', grant_views.track_budget, name='track_budget'),
     path('hod/analytics/', grant_views.hod_analytics, name='hod_analytics'),
+
+    # --- NOTIFICATIONS ---
+    path('notifications/read/', user_views.mark_notifications_read, name='mark_notifications_read'),
 ]
 
 if settings.DEBUG:
