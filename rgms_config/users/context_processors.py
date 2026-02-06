@@ -1,8 +1,8 @@
 from .models import Notification
 
 def user_notifications(request):
-    # Only fetch notifications if user is logged in AND on a dashboard page
-    if request.user.is_authenticated and request.resolver_match and 'dashboard' in request.resolver_match.url_name:
+    # Only fetch notifications if user is logged in AND on the Researcher dashboard specifically
+    if request.user.is_authenticated and request.resolver_match and request.resolver_match.url_name == 'researcher_dashboard':
         
         # Get unread notifications for the bell badge
         unread_count = Notification.objects.filter(recipient=request.user, is_read=False).count()

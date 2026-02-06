@@ -2,6 +2,11 @@ from django import forms
 from .models import Proposal, ProgressReport, Evaluation
 
 class ProposalForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(ProposalForm, self).__init__(*args, **kwargs)
+        # Clear the default 0.00 so the input starts empty
+        self.fields['requested_amount'].initial = None
+
     class Meta:
         model = Proposal
         # Added 'requested_amount'
@@ -25,6 +30,11 @@ class ProposalForm(forms.ModelForm):
 
 # --- NEW ADDITION --- by Law
 class ProgressReportForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(ProgressReportForm, self).__init__(*args, **kwargs)
+        # Clear the default 0.00 so the input starts empty
+        self.fields['expenditure_amount'].initial = None
+        
     class Meta:
         model = ProgressReport
         fields = ['content', 'milestonesAchieved', 'expenditure_amount']
