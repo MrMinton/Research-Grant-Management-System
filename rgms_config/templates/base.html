@@ -42,7 +42,7 @@
       <div class="user-section">
         {% if user.is_authenticated %}
             
-            {% if 'dashboard' in request.resolver_match.url_name %}
+            {% if request.resolver_match.url_name == 'researcher_dashboard' %}
             <div class="rgms-notif-wrapper">
                 <div class="rgms-notif-bell" id="rgmsNotifBell">
                     <svg width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
