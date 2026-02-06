@@ -207,18 +207,22 @@ def reviewer_dashboard(request):
 
 @login_required
 def hod_dashboard(request):
-    # Security: Ensure only HODs can access
     if request.user.role != 'HOD':
         return redirect('home')
 
+    # Pending
     proposals = Proposal.objects.filter(status='Review Complete')
     
-    # Fetch active grants for the monitoring section
+    # Active
     active_grants = Grant.objects.all()
+
+    # Rejected History (NEW)
+    rejected_proposals = Proposal.objects.filter(status='Rejected').order_by('-submissionDate')[:5] # Show last 5
 
     return render(request, 'grants/hod_dashboard.html', {
         'proposals': proposals,
-        'active_grants': active_grants
+        'active_grants': active_grants,
+        'rejected_proposals': rejected_proposals # Pass to template
     })
 
 @login_required
@@ -231,58 +235,76 @@ def approve_proposal(request, proposal_id):
     hod_user = request.user.hod
 
     if request.method == 'POST':
-        try:
-            allocated_amount = Decimal(request.POST.get('amount'))
-        except (ValueError, TypeError):
-            messages.error(request, "Invalid amount entered.")
-            return redirect('approve_proposal', proposal_id=proposal.proposalID)
+        # 1. CHECK THE ACTION (Approve vs Reject)
+        action = request.POST.get('action')
 
-        # 2. VALIDATION: Check against Department Budget
-        if allocated_amount > hod_user.total_department_budget:
-            error_message = f"Insufficient funds. You tried to allocate RM{allocated_amount}, but have only RM{hod_user.total_department_budget}."
-            return render(request, 'grants/approve_form.html', {
-                'proposal': proposal, 
-                'evaluations': evaluations, 
-                'error_message': error_message, 
-                'hod_budget': hod_user.total_department_budget
-            })
-
-        # 3. Create Grant with the ALLOCATED amount
-        # Note: We use 'proposal' as the unique lookup, and update everything else
-        grant, created = Grant.objects.update_or_create(
-            proposal=proposal,
-            defaults={
-                'totalAllocatedAmount': allocated_amount,
-                'startDate': request.POST.get('start_date'),
-                'endDate': request.POST.get('end_date')
-            }
-        )
-        
-        if created:
-            hod_user.total_department_budget -= allocated_amount
-            hod_user.save()
-
-            Budget.objects.create(
-                grant=grant,
-                totalSpent=0.0,
-                expendituresDetails="Initial allocation."
-            )
-            
-            proposal.status = 'Approved'
+        if action == 'reject':
+            # --- REJECTION LOGIC ---
+            proposal.status = 'Rejected'
             proposal.save()
 
-            # --- NOTIFICATION TRIGGER ---
+            # Notify Researcher
             Notification.objects.create(
                 recipient=proposal.researcher,
-                message=f"Good news! Your proposal '{proposal.title}' has been APPROVED.",
-                link=f"/grant/{proposal.proposalID}/"
+                message=f"Update: Your proposal '{proposal.title}' has been REJECTED by the HOD.",
+                link=f"/grant/{proposal.proposalID}/" 
             )
+            
+            messages.info(request, f"Proposal '{proposal.title}' has been rejected.")
+            return redirect('hod_dashboard')
+
+        elif action == 'approve':
+            # --- EXISTING APPROVAL LOGIC ---
+            try:
+                allocated_amount = Decimal(request.POST.get('amount'))
+            except (ValueError, TypeError):
+                messages.error(request, "Invalid amount entered.")
+                return redirect('approve_proposal', proposal_id=proposal.proposalID)
+
+            # Validation: Check against Department Budget
+            if allocated_amount > hod_user.total_department_budget:
+                error_message = f"Insufficient funds. You tried to allocate RM{allocated_amount}, but have only RM{hod_user.total_department_budget}."
+                return render(request, 'grants/approve_form.html', {
+                    'proposal': proposal, 
+                    'evaluations': evaluations, 
+                    'error_message': error_message, 
+                    'hod_budget': hod_user.total_department_budget
+                })
+
+            # Create Grant
+            grant, created = Grant.objects.update_or_create(
+                proposal=proposal,
+                defaults={
+                    'totalAllocatedAmount': allocated_amount,
+                    'startDate': request.POST.get('start_date'),
+                    'endDate': request.POST.get('end_date')
+                }
+            )
+            
+            if created:
+                hod_user.total_department_budget -= allocated_amount
+                hod_user.save()
+
+                Budget.objects.create(
+                    grant=grant,
+                    totalSpent=0.0,
+                    expendituresDetails="Initial allocation."
+                )
                 
-            messages.success(request, 'Proposal approved and grant created successfully.')
-            return redirect('hod_dashboard')
-        else:
-            messages.info(request, 'Grant details updated successfully.')
-            return redirect('hod_dashboard')
+                proposal.status = 'Approved'
+                proposal.save()
+
+                Notification.objects.create(
+                    recipient=proposal.researcher,
+                    message=f"Good news! Your proposal '{proposal.title}' has been APPROVED.",
+                    link=f"/grant/{proposal.proposalID}/"
+                )
+                    
+                messages.success(request, 'Proposal approved and grant created successfully.')
+                return redirect('hod_dashboard')
+            else:
+                messages.info(request, 'Grant details updated successfully.')
+                return redirect('hod_dashboard')
 
     return render(request, 'grants/approve_form.html', {
         'proposal': proposal, 
@@ -424,28 +446,37 @@ def hod_analytics(request):
     if request.user.role != 'HOD':
         return redirect('home')
 
-    # --- CALCULATE TOTALS ---
-    funding_data = Grant.objects.aggregate(total=Sum('totalAllocatedAmount'))
+    # --- 1. BUDGET CALCULATIONS ---
+    # Aggregate total spent from all budgets
     spending_data = Budget.objects.aggregate(total=Sum('totalSpent'))
-    
-    total_funding = funding_data['total'] or 0
     total_spent = spending_data['total'] or 0
-    remaining_funds = request.user.hod.total_department_budget - total_spent
+    
+    # Calculate remaining based on the HOD's limit
+    remaining_funds = request.user.hod.total_department_budget
 
-    # --- CALCULATE RATES ---
+    # --- 2. KPI: ACTIVE GRANTS ---
+    # We count grants that are currently running
+    active_grants_count = Grant.objects.count()
+
+    # --- 3. SUCCESS METRICS (Accept vs Reject) ---
     total_props = Proposal.objects.count()
     approved_props = Proposal.objects.filter(status='Approved').count()
+    rejected_props = Proposal.objects.filter(status='Rejected').count()
     
     if total_props > 0:
         approval_rate = round((approved_props / total_props) * 100, 1)
+        rejection_rate = round(rejected_props / total_props * 100, 1)
     else:
+        # Avoid showing "100% Rejected" if there are 0 proposals
         approval_rate = 0
+        rejection_rate = 0
 
     return render(request, 'grants/hod_analytics.html', {
         'total_spent': float(total_spent),
         'remaining_funds': float(remaining_funds),
+        'active_grants_count': active_grants_count,
         'approval_rate': approval_rate,
-        'rejection_rate': 100 - approval_rate
+        'rejection_rate': rejection_rate
     })
 
 

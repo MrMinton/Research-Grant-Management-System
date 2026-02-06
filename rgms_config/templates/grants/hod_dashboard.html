@@ -78,6 +78,37 @@
     </div>
 </div>
 
+<div class="card" style="margin-top: 30px;">
+    <div class="card-header bg-danger text-white">
+        Rejected Proposals History (Recent)
+    </div>
+    <div class="card-body">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Project Title</th>
+                    <th>Researcher</th>
+                    <th>Date Rejected</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in rejected_proposals %}
+                <tr>
+                    <td>#{{ p.proposalID }}</td>
+                    <td>{{ p.title }}</td>
+                    <td>{{ p.researcher.username }}</td>
+                    <td><span class="badge badge-danger">Rejected</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-muted text-center">No rejection history found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
 <div class="card">
     <div class="card-header">
         Active Grants Monitoring
