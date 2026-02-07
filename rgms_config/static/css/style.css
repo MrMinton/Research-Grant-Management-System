@@ -362,7 +362,7 @@ label {
     font-size: 2rem;
     font-weight: 700;
     margin-bottom: 5px;
-	color: white;
+    color: white;
 }
 
 /* 2. KPI Cards (Grid Layout) */
@@ -604,4 +604,859 @@ nav.scrolled {
     border: 1px solid #d1d5db;
     border-radius: 8px;
     background-color: white;
+}
+
+/* =========================================
+   NOTIFICATION SYSTEM STYLES (FIXED)
+   ========================================= */
+
+/* 1. Wrapper to hold bell and dropdown */
+.rgms-notif-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-right: 25px; /* Adds breathing room between bell and username */
+}
+
+/* 2. The Bell Icon */
+.rgms-notif-bell {
+    position: relative;
+    cursor: pointer;
+    color: hwb(0 100% 0%);
+    padding: 8px; /* Bigger touch target */
+    border-radius: 50%;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.rgms-notif-bell:hover {
+    color: #3195ff;
+}
+
+/* 3. The Red Badge (FIXED ALIGNMENT) */
+.rgms-notif-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    
+    /* Box Model & Color */
+    background-color: #ff3b30; /* Bright Alert Red */
+    color: white;
+    
+    /* Font Styling */
+    font-size: 10px;
+    font-weight: 800;
+    font-family: sans-serif;
+    
+    /* Perfect Centering Logic */
+    width: 18px;
+    height: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* Shape */
+    border-radius: 50%;
+    border: 2px solid #ffffff; /* White border makes it pop off the icon */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+
+/* 4. The Dropdown Container */
+.rgms-notif-dropdown {
+    display: none; /* Hidden by default */
+    position: absolute;
+    right: -10px; /* Aligns with the right edge of wrapper */
+    top: 130%; /* Pushes it down below the navbar */
+    
+    width: 350px; /* Wide enough for text */
+    background: white;
+    
+    border-radius: 12px;
+    border: 1px solid #e1e4e8;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    z-index: 9999;
+    overflow: hidden;
+}
+
+/* Class added by JS to show the menu */
+.rgms-notif-dropdown.show {
+    display: block;
+    animation: slideDownFade 0.2s ease-out;
+}
+
+/* 5. Header */
+.rgms-notif-header {
+    background-color: #f8f9fa;
+    padding: 12px 16px;
+    border-bottom: 1px solid #eaeaea;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rgms-notif-header span {
+    font-weight: 700;
+    color: #333;
+    font-size: 14px;
+}
+
+.rgms-notif-count {
+    background: rgba(255, 59, 48, 0.1);
+    color: #ff3b30;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+/* 6. Notification List (Scrollable) */
+.rgms-notif-list {
+    max-height: 350px;
+    overflow-y: auto;
+    background-color: #fff;
+}
+
+/* 7. Individual Item (FIXES UGLY BLUE LINKS) */
+.rgms-notif-item {
+    display: flex;
+    align-items: start;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f1f1;
+    
+    /* Override default link styles */
+    text-decoration: none !important;
+    color: #444 !important;
+    transition: background 0.2s;
+}
+
+.rgms-notif-item:hover {
+    background-color: #f8faff;
+    text-decoration: none;
+}
+
+/* UNREAD STATE */
+.rgms-notif-item.unread {
+    background-color: #fffaf0; /* Light yellow tint */
+    border-left: 4px solid #ffc107; /* Orange accent bar */
+}
+
+/* Icon (Checkmark, Alert, etc.) */
+.notif-icon {
+    font-size: 18px;
+    margin-right: 14px;
+    flex-shrink: 0; /* Prevents icon from squishing */
+}
+
+/* Content Text */
+.notif-content p {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: #333;
+}
+
+.rgms-notif-item.unread .notif-content p {
+    font-weight: 700; /* Bolder text for unread */
+    color: #000;
+}
+
+.notif-content small {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #888;
+}
+
+/* 8. Empty State */
+.rgms-notif-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: #999;
+}
+
+.rgms-notif-empty p {
+    margin: 10px 0 0;
+    font-size: 14px;
+    color: #666;
+}
+
+/* 9. Footer (Mark Read Button) */
+.rgms-notif-footer {
+    text-align: center;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-top: 1px solid #eaeaea;
+}
+
+.rgms-notif-mark-read {
+    border: none;
+    background: none;
+    color: #007bff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.rgms-notif-mark-read:hover {
+    text-decoration: underline;
+}
+
+/* Animation */
+@keyframes slideDownFade {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================
+   SUBMIT REPORT PAGE STYLES (FIXED VISIBILITY)
+   ========================================= */
+
+/* Main Container Spacing */
+.report-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+    position: relative; /* Ensures z-index works if needed */
+}
+
+/* --- FIXED: Header Text Colors --- */
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.page-header h1 {
+    font-size: 2.2rem;
+    color: white; /* Changed from #333 to White for visibility */
+    margin-bottom: 10px;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.page-header p {
+    color: rgba(255, 255, 255, 0.9); /* Semi-transparent white */
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+/* Grid Layout (Side-by-Side) */
+.report-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr; /* Slightly wider left column */
+    gap: 30px;
+    align-items: start;
+}
+
+@media (max-width: 768px) {
+    .report-grid {
+        grid-template-columns: 1fr; /* Stack on mobile */
+    }
+}
+
+/* --- LEFT CARD: Project Summary --- */
+.project-summary-card {
+    background: white; /* Changed to pure white for better contrast */
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.project-summary-card h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    color: #1f2937; /* Dark grey for internal card text */
+    border-bottom: 2px solid #f3f4f6;
+    padding-bottom: 10px;
+    font-weight: 700;
+}
+
+.summary-item {
+    margin-bottom: 20px;
+}
+
+.summary-item label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #6b7280; /* Cool grey */
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.summary-item p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #111827; /* Almost black */
+    margin: 0;
+}
+
+.highlight-text {
+    color: #2563eb !important; /* Brand Blue */
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    background: #f3f4f6;
+    color: #374151;
+}
+
+/* Dynamic Badge Colors */
+.status-badge.approved { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+.status-badge.needs-intervention { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+.status-badge.pending { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+.summary-note {
+    margin-top: 30px;
+    padding: 15px;
+    background: #eff6ff; /* Light Blue BG */
+    border-radius: 8px;
+    border-left: 4px solid #2563eb;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #1e40af;
+}
+
+/* --- RIGHT CARD: Form Area --- */
+.form-card {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.styled-form .form-group {
+    margin-bottom: 25px;
+}
+
+.styled-form label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #374151;
+}
+
+/* Modern Inputs */
+.styled-form input[type="text"],
+.styled-form textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.2s;
+    background-color: #f9fafb;
+}
+
+.styled-form input[type="text"]:focus,
+.styled-form textarea:focus {
+    background-color: white;
+    border-color: #2563eb;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.styled-form textarea {
+    min-height: 200px;
+    resize: vertical;
+}
+
+.help-text {
+    display: block;
+    margin-top: 6px;
+    color: #9ca3af;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+/* Form Buttons */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #f3f4f6;
+}
+
+.btn {
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.4);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.5);
+}
+
+.btn-secondary {
+    background-color: white;
+    color: #4b5563;
+    border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+}
+
+/* =========================================
+   CLEAN DASHBOARD UI (FIXED SPACING & NO LINES)
+   ========================================= */
+
+/* 1. Header Spacing */
+.dashboard-header {
+    margin-bottom: 35px; /* More space below header */
+}
+
+.dashboard-header .header-text h1 {
+    color: white;
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+    text-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.dashboard-header .header-text p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1.1rem;
+}
+
+/* 2. Glass Button */
+.btn-white-glass {
+    background: white;
+    color: #2563eb;
+    border: none;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    padding: 12px 24px; /* Larger button */
+    border-radius: 10px;
+    transition: transform 0.2s;
+}
+
+.btn-white-glass:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+/* 3. The Table Card */
+.dashboard-card {
+    border: none;
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); /* Floating effect */
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 50px;
+}
+
+/* 4. CLEAN TABLE STYLES (No Grid Lines) */
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    table-layout: fixed; /* Forces strict equal width columns */
+}
+
+.modern-table thead th {
+    background-color: white;
+    color: #94a3b8;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    padding: 25px 10px 15px 10px;
+    border-bottom: none !important; /* REMOVED HEADER BORDER ONLY */
+}
+
+.modern-table tbody td {
+    padding: 20px 10px;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #f1f5f9; /* RESTORED ROW BORDERS */
+    background: white;
+    color: #334155;
+    word-wrap: break-word; /* Prevents long titles from breaking layout */
+}
+
+.modern-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.centered-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers the title and ID stack */
+}
+
+.text-center { text-align: center !important; }
+
+/* Hover Effect: Entire row highlights slightly */
+.table-row-animate:hover td {
+    background-color: #f8fafc;
+}
+
+/* 5. Typography & Elements */
+.project-title {
+    display: block;
+    font-weight: 700;
+    color: #0f172a; /* Darker text */
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+
+.grant-id {
+    color: #64748b;
+    font-size: 0.75rem;
+    font-family: monospace;
+    background: #f1f5f9;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.ver-tag {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: #64748b;
+    background: white;
+    border: 1px solid #e2e8f0;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+}
+
+/* 6. Helper Classes for Spacing */
+.pl-4 { padding-left: 35px !important; }
+.pr-4 { padding-right: 35px !important; }
+
+/* 7. Status Badges (Pill Shape) */
+.badge-success-soft { background: #dcfce7; color: #15803d; padding: 8px 16px; border-radius: 100px; font-weight: 700; font-size: 0.8rem; }
+.badge-danger-soft  { background: #fee2e2; color: #b91c1c; padding: 8px 16px; border-radius: 100px; font-weight: 700; font-size: 0.8rem; }
+.badge-warning-soft { background: #fef3c7; color: #b45309; padding: 8px 16px; border-radius: 100px; font-weight: 700; font-size: 0.8rem; }
+.badge-info-soft    { background: #e0f2fe; color: #0369a1; padding: 8px 16px; border-radius: 100px; font-weight: 700; font-size: 0.8rem; }
+.badge-grey-soft    { background: #f1f5f9; color: #64748b; padding: 8px 16px; border-radius: 100px; font-weight: 700; font-size: 0.8rem; }
+
+/* 8. Action Buttons */
+.btn-primary-gradient {
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px; /* Bigger touch target */
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+    transition: all 0.2s;
+}
+
+.btn-primary-gradient:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
+}
+
+.btn-outline-secondary {
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-outline-secondary:hover {
+    border-color: #cbd5e1;
+    color: #334155;
+    background: #f8fafc;
+}
+
+/* =========================================
+   ALIGNMENT UTILITIES 
+   ========================================= */
+
+/* Text Alignment Helpers */
+.text-center { text-align: center !important; }
+.text-left   { text-align: left !important; }
+.text-right  { text-align: right !important; }
+
+/* Text Color Helpers */
+.text-muted  { color: #64748b !important; }
+
+/* Spacing Helpers (Ensure these match the HTML classes) */
+.pl-4 { padding-left: 35px !important; }
+.pr-4 { padding-right: 35px !important; }
+
+/* Specific tweaks for the Action Button to look centered vertically */
+.modern-table td {
+    vertical-align: middle; /* Ensures buttons don't sit too high or low */
+}
+
+/* Fix for status text to align nicely with icons */
+.status-text-muted {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    font-style: italic;
+    font-weight: 500;
+}
+
+/* =========================================
+   CURRENCY INPUT FIX (ADD TO BOTTOM)
+   ========================================= */
+
+.currency-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* The "RM" Text */
+.currency-prefix {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%); /* Perfect vertical center */
+    color: #64748b; /* Cool grey */
+    font-weight: 700;
+    font-size: 0.95rem;
+    z-index: 10; /* Sits on top of input background */
+    pointer-events: none; /* Click passes through to input */
+}
+
+/* The Actual Input Field */
+.currency-group input[type="number"] {
+    padding-left: 50px !important; /* Make room for "RM" */
+    width: 100%;
+    height: 48px; /* Fixed nice height */
+    font-weight: 600;
+    color: #1e293b;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.currency-group input[type="number"]:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    background: white;
+}
+
+/* Optional: Hide the spinner arrows in number inputs for cleaner look */
+.currency-group input[type="number"]::-webkit-outer-spin-button,
+.currency-group input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.currency-group input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* =========================================
+   EMPTY STATE STYLES (FIXED)
+   ========================================= */
+
+.empty-state-container {
+    padding: 80px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: white;
+    border-radius: 0 0 16px 16px; /* Match card corners */
+}
+
+.empty-state-content {
+    text-align: center;
+    max-width: 450px;
+}
+
+/* Icon Circle Background */
+.empty-icon-circle {
+    width: 80px;
+    height: 80px;
+    background-color: #f0f9ff; /* Very light blue */
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 25px auto;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.empty-icon-emoji {
+    font-size: 2.5rem;
+}
+
+/* Typography */
+.empty-state-content h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 12px;
+}
+
+.empty-state-content p {
+    color: #64748b;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+/* Button Size Adjustment */
+.btn-lg {
+    padding: 12px 30px;
+    font-size: 1rem;
+}
+
+.mt-3 { margin-top: 1rem; }
+
+/* =========================================
+   PDF EXPORT STYLES (For Analytics Reports)
+   ========================================= */
+
+/* PDF Page Setup */
+@page {
+    size: A4;
+    margin: 2cm;
+}
+
+/* PDF Body */
+.pdf-body {
+    font-family: Arial, sans-serif;
+    font-size: 12pt;
+    color: #333;
+}
+
+/* PDF Header */
+.pdf-header {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 3px solid #2563eb;
+    padding-bottom: 15px;
+}
+
+.pdf-header h1 {
+    color: #2563eb;
+    margin: 0;
+    font-size: 24pt;
+}
+
+.pdf-header p {
+    color: #666;
+    margin: 5px 0 0 0;
+    font-size: 11pt;
+}
+
+/* PDF Report Date */
+.pdf-report-date {
+    text-align: right;
+    color: #666;
+    font-size: 10pt;
+    margin-bottom: 20px;
+}
+
+/* PDF Sections */
+.pdf-section {
+    margin-bottom: 25px;
+}
+
+.pdf-section-title {
+    font-size: 16pt;
+    font-weight: bold;
+    color: #2563eb;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+/* PDF Tables */
+.pdf-kpi-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.pdf-kpi-table th {
+    background-color: #f3f4f6;
+    padding: 12px;
+    text-align: left;
+    font-weight: bold;
+    border: 1px solid #d1d5db;
+}
+
+.pdf-kpi-table td {
+    padding: 12px;
+    border: 1px solid #d1d5db;
+}
+
+.pdf-kpi-table tr:nth-child(even) {
+    background-color: #f9fafb;
+}
+
+/* PDF Value Styling */
+.pdf-value-positive {
+    color: #10b981;
+    font-weight: bold;
+}
+
+.pdf-value-negative {
+    color: #ef4444;
+    font-weight: bold;
+}
+
+.pdf-value-primary {
+    color: #2563eb;
+    font-weight: bold;
+}
+
+/* PDF Stat Grid */
+.pdf-stat-grid {
+    display: table;
+    width: 100%;
+    margin-top: 15px;
+}
+
+.pdf-stat-row {
+    display: table-row;
+}
+
+.pdf-stat-label {
+    display: table-cell;
+    padding: 8px;
+    font-weight: bold;
+    width: 60%;
+}
+
+.pdf-stat-value {
+    display: table-cell;
+    padding: 8px;
+    text-align: right;
+}
+
+/* PDF Footer */
+.pdf-footer {
+    margin-top: 40px;
+    padding-top: 15px;
+    border-top: 1px solid #d1d5db;
+    text-align: center;
+    color: #666;
+    font-size: 9pt;
 }

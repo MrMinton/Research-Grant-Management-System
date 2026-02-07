@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -7,6 +8,13 @@ from decimal import Decimal
 from django.db.models import Max
 from django.db.models import Sum, Count
 from django.db.models import Max
+from users.models import Notification
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
+from datetime import datetime
+from django.conf import settings
+import os
 
 
 @login_required
@@ -33,7 +41,7 @@ def researcher_dashboard(request):
     
     return render(request, 'grants/researcher_dashboard.html', {'proposals': my_proposals})
 
-@login_required
+login_required
 def submit_proposal(request):
     if request.user.role != 'Researcher':
         return redirect('home')
@@ -44,25 +52,35 @@ def submit_proposal(request):
             new_proposal = form.save(commit=False)
             new_proposal.researcher = request.user.researcher
             
-            # --- LOGIC: VERSION CONTROL ---
-            # Check if a proposal with this title already exists for this user
             existing_proposals = Proposal.objects.filter(
                 researcher=request.user.researcher, 
                 title=new_proposal.title
             )
             
             if existing_proposals.exists():
-                # Find the highest version number
                 current_max = existing_proposals.aggregate(Max('version'))['version__max']
-                new_proposal.version = current_max + 0.1  # Increment version (e.g., 1.0 -> 1.1)
-                messages.info(request, f"New version {new_proposal.version:.1f} created.")
+                new_proposal.version = current_max + 0.1 
+                messages.success(request, f"New version {new_proposal.version:.1f} submitted successfully!")
             else:
-                new_proposal.version = 1.0 # First submission
+                new_proposal.version = 1.0
+                messages.success(request, "Proposal submitted successfully!")
+
+            if new_proposal.pdf_file:
+                new_proposal.status = 'Pending'
+            else:
+                new_proposal.status = 'Draft'
 
             new_proposal.save()
             return redirect('researcher_dashboard')
+        
+        else:
+            # --- ADDED: Error Feedback ---
+            messages.error(request, "Submission failed. Please check for file type or other errors.")
+            # -----------------------------
+            
     else:
         form = ProposalForm()
+        
     return render(request, 'grants/submit_proposal.html', {'form': form})
 
 @login_required
@@ -154,6 +172,22 @@ def submit_report(request, proposal_id):
             report = form.save(commit=False)
             report.proposal = proposal
             report.save()
+
+            # --- LOGIC: UPDATE BUDGET TOTAL SPENT ---
+            try:
+                # 1. Get the grant and budget associated with this proposal
+                grant = proposal.grant
+                budget = grant.budget
+                
+                # 2. Add the report's expenditure to the total spent
+                if report.expenditure_amount > 0:
+                    budget.totalSpent += report.expenditure_amount
+                    budget.save()
+                    
+            except (Grant.DoesNotExist, Budget.DoesNotExist):
+                # If for some reason grant/budget doesn't exist, ignore financial update
+                pass
+
             messages.success(request, "Progress report submitted successfully.")
             return redirect('grant_detail', proposal_id=proposal.proposalID)
     else:
@@ -173,9 +207,15 @@ def reviewer_dashboard(request):
     # Reviewers should see everything that is NOT a 'Draft'.
 
     proposals_to_review = Proposal.objects.all()
+    
+    # Get list of already evaluated proposals
+    evaluated_ids = Evaluation.objects.filter(
+        reviewer=request.user.reviewer
+    ).values_list('proposal_id', flat=True)
 
     context = {
-        'proposals': proposals_to_review
+        'proposals': proposals_to_review,
+        'evaluated_ids': evaluated_ids
     }
     return render(request, 'users/reviewer_dashboard.html', context)
 
@@ -184,18 +224,22 @@ def reviewer_dashboard(request):
 
 @login_required
 def hod_dashboard(request):
-    # Security: Ensure only HODs can access
     if request.user.role != 'HOD':
         return redirect('home')
 
+    # Pending
     proposals = Proposal.objects.filter(status='Review Complete')
     
-    # Fetch active grants for the monitoring section
+    # Active
     active_grants = Grant.objects.all()
+
+    # Rejected History (NEW)
+    rejected_proposals = Proposal.objects.filter(status='Rejected').order_by('-submissionDate')[:5] # Show last 5
 
     return render(request, 'grants/hod_dashboard.html', {
         'proposals': proposals,
-        'active_grants': active_grants
+        'active_grants': active_grants,
+        'rejected_proposals': rejected_proposals # Pass to template
     })
 
 @login_required
@@ -208,51 +252,76 @@ def approve_proposal(request, proposal_id):
     hod_user = request.user.hod
 
     if request.method == 'POST':
-        try:
-            allocated_amount = Decimal(request.POST.get('amount'))
-        except (ValueError, TypeError):
-            messages.error(request, "Invalid amount entered.")
-            return redirect('approve_proposal', proposal_id=proposal.proposalID)
+        # 1. CHECK THE ACTION (Approve vs Reject)
+        action = request.POST.get('action')
 
-        # 2. VALIDATION: Check against Department Budget
-        if allocated_amount > hod_user.total_department_budget:
-            error_message = f"Insufficient funds. You tried to allocate RM{allocated_amount}, but have only RM{hod_user.total_department_budget}."
-            return render(request, 'grants/approve_form.html', {
-                'proposal': proposal, 
-                'evaluations': evaluations, 
-                'error_message': error_message, 
-                'hod_budget': hod_user.total_department_budget
-            })
+        if action == 'reject':
+            # --- REJECTION LOGIC ---
+            proposal.status = 'Rejected'
+            proposal.save()
 
-        # 3. Create Grant with the ALLOCATED amount
-        # Note: We use 'proposal' as the unique lookup, and update everything else
-        grant, created = Grant.objects.update_or_create(
-            proposal=proposal,
-            defaults={
-                'totalAllocatedAmount': allocated_amount,
-                'startDate': request.POST.get('start_date'),
-                'endDate': request.POST.get('end_date')
-            }
-        )
-        
-        if created:
-            hod_user.total_department_budget -= allocated_amount
-            hod_user.save()
-
-            Budget.objects.create(
-                grant=grant,
-                totalSpent=0.0,
-                expendituresDetails="Initial allocation."
+            # Notify Researcher
+            Notification.objects.create(
+                recipient=proposal.researcher,
+                message=f"Update: Your proposal '{proposal.title}' has been REJECTED by the HOD.",
+                link=f"/grant/{proposal.proposalID}/" 
             )
             
-            proposal.status = 'Approved'
-            proposal.save()
+            messages.info(request, f"Proposal '{proposal.title}' has been rejected.")
+            return redirect('hod_dashboard')
+
+        elif action == 'approve':
+            # --- EXISTING APPROVAL LOGIC ---
+            try:
+                allocated_amount = Decimal(request.POST.get('amount'))
+            except (ValueError, TypeError):
+                messages.error(request, "Invalid amount entered.")
+                return redirect('approve_proposal', proposal_id=proposal.proposalID)
+
+            # Validation: Check against Department Budget
+            if allocated_amount > hod_user.total_department_budget:
+                error_message = f"Insufficient funds. You tried to allocate RM{allocated_amount}, but have only RM{hod_user.total_department_budget}."
+                return render(request, 'grants/approve_form.html', {
+                    'proposal': proposal, 
+                    'evaluations': evaluations, 
+                    'error_message': error_message, 
+                    'hod_budget': hod_user.total_department_budget
+                })
+
+            # Create Grant
+            grant, created = Grant.objects.update_or_create(
+                proposal=proposal,
+                defaults={
+                    'totalAllocatedAmount': allocated_amount,
+                    'startDate': request.POST.get('start_date'),
+                    'endDate': request.POST.get('end_date')
+                }
+            )
+            
+            if created:
+                hod_user.total_department_budget -= allocated_amount
+                hod_user.save()
+
+                Budget.objects.create(
+                    grant=grant,
+                    totalSpent=0.0,
+                    expendituresDetails="Initial allocation."
+                )
                 
-            messages.success(request, 'Proposal approved and grant created successfully.')
-            return redirect('hod_dashboard')
-        else:
-            messages.info(request, 'Grant details updated successfully.')
-            return redirect('hod_dashboard')
+                proposal.status = 'Approved'
+                proposal.save()
+
+                Notification.objects.create(
+                    recipient=proposal.researcher,
+                    message=f"Good news! Your proposal '{proposal.title}' has been APPROVED.",
+                    link=f"/grant/{proposal.proposalID}/"
+                )
+                    
+                messages.success(request, 'Proposal approved and grant created successfully.')
+                return redirect('hod_dashboard')
+            else:
+                messages.info(request, 'Grant details updated successfully.')
+                return redirect('hod_dashboard')
 
     return render(request, 'grants/approve_form.html', {
         'proposal': proposal, 
@@ -269,6 +338,19 @@ def project_detail(request, grant_id):
     proposal = grant.proposal
 
     reports = ProgressReport.objects.filter(proposal=proposal).order_by('-submissionDate')
+	# --- NEW: CALCULATE TIME ELAPSED % ---
+    today = timezone.now().date()
+    total_days = (grant.endDate - grant.startDate).days
+    elapsed_days = (today - grant.startDate).days
+
+    if total_days > 0:
+        time_progress = round((elapsed_days / total_days) * 100)
+    else:
+        time_progress = 100 
+    
+    # Ensure it stays between 0% and 100%
+    time_progress = max(0, min(100, time_progress))
+    
 
     if request.method == 'POST':
         action_request = request.POST.get('feedback')
@@ -279,9 +361,13 @@ def project_detail(request, grant_id):
             if status_flag == 'Needs Intervention':
                 prefix = "URGENT INTERVENTION"
                 milestone_text = "⚠ Status set to Needs Intervention"
+                # More alarming notification message
+                notif_msg = f"URGENT: HOD requires intervention on '{proposal.title}'. See feedback."
             else:
                 prefix = "HOD FEEDBACK"
                 milestone_text = f"✔ Status set to {status_flag}"
+                # Standard notification message
+                notif_msg = f"Update: HOD sent feedback for '{proposal.title}': {status_flag}"
 
             # 2. Create the Report with the correct label
             ProgressReport.objects.create(
@@ -292,6 +378,13 @@ def project_detail(request, grant_id):
             
             proposal.status = status_flag
             proposal.save()
+
+            # --- NOTIFICATION TRIGGER ---
+            Notification.objects.create(
+                recipient=proposal.researcher,
+                message=notif_msg,
+                link=f"/grant/{proposal.proposalID}/"
+            )
             
             messages.success(request, f"Feedback sent and status updated to {status_flag}.")
             return redirect('hod_dashboard')
@@ -299,7 +392,8 @@ def project_detail(request, grant_id):
     return render(request, 'grants/project_monitoring_detail.html', {
         'grant': grant,
         'proposal': proposal,
-        'reports': reports
+        'reports': reports,
+        'time_progress': time_progress
     })
 
 @login_required
@@ -338,6 +432,13 @@ def track_budget(request, grant_id):
                 
                 hod_user.total_department_budget -= additional_funds
                 hod_user.save()
+
+                # --- NOTIFICATION 3: BUDGET TOP-UP ---
+                Notification.objects.create(
+                    recipient=grant.proposal.researcher,
+                    message=f"Budget Alert: Top-up of RM{additional_funds} approved for '{grant.proposal.title}'.",
+                    link=f"/grant/{grant.proposal.proposalID}/"
+                )
                 
                 messages.success(request, f"Successfully added ${additional_funds} to the project budget.")
                 return redirect('track_budget', grant_id=grant.grantID)
@@ -362,29 +463,146 @@ def hod_analytics(request):
     if request.user.role != 'HOD':
         return redirect('home')
 
-    # --- CALCULATE TOTALS ---
-    funding_data = Grant.objects.aggregate(total=Sum('totalAllocatedAmount'))
+    # --- 1. BUDGET CALCULATIONS ---
+    # Aggregate total spent from all budgets
     spending_data = Budget.objects.aggregate(total=Sum('totalSpent'))
-    
-    total_funding = funding_data['total'] or 0
     total_spent = spending_data['total'] or 0
-    remaining_funds = request.user.hod.total_department_budget - total_spent
+    
+    # Calculate remaining based on the HOD's limit
+    remaining_funds = request.user.hod.total_department_budget
 
-    # --- CALCULATE RATES ---
+    # --- 2. KPI: ACTIVE GRANTS ---
+    # We count grants that are currently running
+    active_grants_count = Grant.objects.count()
+
+    # --- 3. SUCCESS METRICS (Accept vs Reject) ---
     total_props = Proposal.objects.count()
     approved_props = Proposal.objects.filter(status='Approved').count()
+    rejected_props = Proposal.objects.filter(status='Rejected').count()
     
     if total_props > 0:
         approval_rate = round((approved_props / total_props) * 100, 1)
+        rejection_rate = round(rejected_props / total_props * 100, 1)
     else:
+        # Avoid showing "100% Rejected" if there are 0 proposals
         approval_rate = 0
+        rejection_rate = 0
 
     return render(request, 'grants/hod_analytics.html', {
         'total_spent': float(total_spent),
         'remaining_funds': float(remaining_funds),
+        'active_grants_count': active_grants_count,
         'approval_rate': approval_rate,
-        'rejection_rate': 100 - approval_rate
+        'rejection_rate': rejection_rate
     })
+
+
+@login_required
+def export_hod_analytics_pdf(request):
+    """Export department analytics data as a PDF report."""
+    if request.user.role != 'HOD':
+        return redirect('home')
+    
+    # --- REUSE DATA CALCULATION LOGIC FROM hod_analytics ---
+    # 1. Budget calculations
+    spending_data = Budget.objects.aggregate(total=Sum('totalSpent'))
+    total_spent = spending_data['total'] or 0
+    remaining_funds = request.user.hod.total_department_budget
+    
+    # Calculate total budget for display
+    total_budget = float(total_spent) + float(remaining_funds)
+    
+    # Calculate budget utilization percentage
+    if total_budget > 0:
+        budget_utilization = (float(total_spent) / total_budget) * 100
+    else:
+        budget_utilization = 0
+    
+    # 2. Active grants KPI
+    active_grants_count = Grant.objects.count()
+    
+    # 3. Success metrics
+    total_props = Proposal.objects.count()
+    approved_props = Proposal.objects.filter(status='Approved').count()
+    rejected_props = Proposal.objects.filter(status='Rejected').count()
+    
+    if total_props > 0:
+        approval_rate = round((approved_props / total_props) * 100, 1)
+        rejection_rate = round(rejected_props / total_props * 100, 1)
+    else:
+        approval_rate = 0
+        rejection_rate = 0
+    
+    # Read ONLY PDF-specific CSS from style.css file
+    css_path = os.path.join(settings.BASE_DIR, 'static', 'css', 'style.css')
+    css_content = ''
+    try:
+        with open(css_path, 'r', encoding='utf-8') as f:
+            full_css = f.read()
+            # Extract only the PDF EXPORT STYLES section
+            pdf_start = full_css.find('/* =========================================')
+            pdf_start = full_css.find('PDF EXPORT STYLES', pdf_start)
+            if pdf_start != -1:
+                # Find the start of the comment block
+                section_start = full_css.rfind('/*', 0, pdf_start)
+                # Get everything from that point onward
+                css_content = full_css[section_start:]
+    except Exception as e:
+        # Fallback CSS if file can't be read
+        css_content = '''
+        @page { size: A4; margin: 2cm; }
+        .pdf-body { font-family: Arial, sans-serif; font-size: 12pt; color: #333; }
+        .pdf-header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding-bottom: 15px; }
+        .pdf-header h1 { color: #2563eb; margin: 0; font-size: 24pt; }
+        .pdf-header p { color: #666; margin: 5px 0 0 0; font-size: 11pt; }
+        .pdf-report-date { text-align: right; color: #666; font-size: 10pt; margin-bottom: 20px; }
+        .pdf-section { margin-bottom: 25px; }
+        .pdf-section-title { font-size: 16pt; font-weight: bold; color: #2563eb; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 2px solid #e5e7eb; }
+        .pdf-kpi-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .pdf-kpi-table th { background-color: #f3f4f6; padding: 12px; text-align: left; font-weight: bold; border: 1px solid #d1d5db; }
+        .pdf-kpi-table td { padding: 12px; border: 1px solid #d1d5db; }
+        .pdf-kpi-table tr:nth-child(even) { background-color: #f9fafb; }
+        .pdf-value-positive { color: #10b981; font-weight: bold; }
+        .pdf-value-negative { color: #ef4444; font-weight: bold; }
+        .pdf-value-primary { color: #2563eb; font-weight: bold; }
+        .pdf-stat-grid { display: table; width: 100%; margin-top: 15px; }
+        .pdf-stat-row { display: table-row; }
+        .pdf-stat-label { display: table-cell; padding: 8px; font-weight: bold; width: 60%; }
+        .pdf-stat-value { display: table-cell; padding: 8px; text-align: right; }
+        .pdf-footer { margin-top: 40px; padding-top: 15px; border-top: 1px solid #d1d5db; text-align: center; color: #666; font-size: 9pt; }
+        '''
+    
+    # Prepare context for PDF template
+    context = {
+        'total_spent': float(total_spent),
+        'remaining_funds': float(remaining_funds),
+        'total_budget': total_budget,
+        'budget_utilization': budget_utilization,
+        'active_grants_count': active_grants_count,
+        'approval_rate': approval_rate,
+        'rejection_rate': rejection_rate,
+        'current_date': datetime.now().strftime('%B %d, %Y at %I:%M %p'),
+        'css_content': css_content  # Pass only PDF CSS to template
+    }
+    
+    # Render HTML template with context
+    html = render_to_string('grants/hod_analytics_pdf.html', context)
+    
+    # Create PDF
+    response = HttpResponse(content_type='application/pdf')
+    filename = f"Department_Analytics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    # Convert HTML to PDF
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    
+    if pisa_status.err:
+        return HttpResponse('Error generating PDF', status=500)
+    
+    return response
+
+
+
 
 
 @login_required
@@ -407,6 +625,13 @@ def evaluate_proposal(request, proposal_id):
             proposal.status = 'Review Complete'
             proposal.save()
 
+            # --- NOTIFICATION TRIGGER ---
+            Notification.objects.create(
+                recipient=proposal.researcher,
+                message=f"Update: A reviewer has evaluated '{proposal.title}'.",
+                link=f"/grant/{proposal.proposalID}/"
+            )
+
             messages.success(request, f"Evaluation submitted for {proposal.title}.")
             return redirect('reviewer_dashboard')
     else:
@@ -415,4 +640,21 @@ def evaluate_proposal(request, proposal_id):
     return render(request, 'grants/evaluate_proposal.html', {
         'form': form,
         'proposal': proposal
+    })
+
+
+
+@login_required
+def view_evaluation(request, proposal_id):
+    if request.user.role != 'Reviewer':
+        return redirect('home')
+
+    proposal = get_object_or_404(Proposal, pk=proposal_id)
+    
+    # Fetch the evaluation specifically created by this reviewer for this proposal
+    evaluation = get_object_or_404(Evaluation, proposal=proposal, reviewer=request.user.reviewer)
+
+    return render(request, 'grants/view_evaluation.html', {
+        'proposal': proposal, 
+        'evaluation': evaluation
     })
