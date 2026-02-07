@@ -30,26 +30,32 @@
         </div>
     </div>
 
-    <!-- <div class="col-md-6">
+    <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                Proposal Success Metrics
+                Proposal Success Metrics (%)
             </div>
             <div class="card-body" style="height: 400px; display: flex; align-items: center; justify-content: center;">
                 <canvas id="statusChart"></canvas>
             </div>
         </div>
-    </div> -->
+    </div>
 </div>
 
 <div class="hod-kpi-grid">
     <div class="hod-kpi-card">
         <div class="hod-kpi-label">Total Spent</div>
-        <div class="hod-kpi-value text-danger">${{ total_spent }}</div>
+        <div class="hod-kpi-value text-danger">RM {{ total_spent }}</div>
     </div>
+    
     <div class="hod-kpi-card">
         <div class="hod-kpi-label">Remaining Funds</div>
-        <div class="hod-kpi-value text-success">${{ remaining_funds }}</div>
+        <div class="hod-kpi-value text-success">RM {{ remaining_funds }}</div>
+    </div>
+
+    <div class="hod-kpi-card">
+        <div class="hod-kpi-label">Active Grants</div>
+        <div class="hod-kpi-value text-primary">{{ active_grants_count }}</div>
     </div>
 </div>
 
@@ -60,14 +66,18 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const getVal = (id) => JSON.parse(document.getElementById(id).textContent || 0);
+        // Helper to get data from the json_script tags
+        const getVal = (id) => {
+            const el = document.getElementById(id);
+            return el ? JSON.parse(el.textContent) : 0;
+        };
 
         const valSpent = getVal('data-spent');
         const valRemaining = getVal('data-remaining');
         const valApproval = getVal('data-approval');
         const valRejection = getVal('data-rejection');
 
-        // Budget Chart
+        // 1. Budget Chart (Doughnut)
         const budgetCanvas = document.getElementById('budgetChart');
         if (budgetCanvas) {
             new Chart(budgetCanvas.getContext('2d'), {
@@ -84,7 +94,7 @@
             });
         }
 
-        // Status Chart
+        // 2. Status Chart (Bar) - FIXED
         const statusCanvas = document.getElementById('statusChart');
         if (statusCanvas) {
             new Chart(statusCanvas.getContext('2d'), {
@@ -92,16 +102,28 @@
                 data: {
                     labels: ['Approved', 'Rejected/Other'],
                     datasets: [{
-                        label: 'Proposals (%)',
+                        label: 'Percentage (%)',
                         data: [valApproval, valRejection],
                         backgroundColor: ['#2563eb', '#9ca3af'],
-                        borderRadius: 5
+                        borderRadius: 5,
+                        barThickness: 50
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true, max: 100 } }
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            max: 100,
+                            ticks: {
+                                callback: function(value) { return value + "%" }
+                            }
+                        } 
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
                 }
             });
         }

@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
 
 class User(AbstractUser):
     role_choices = [('Researcher', 'Researcher'), ('Reviewer', 'Reviewer'), ('HOD', 'HOD')]
@@ -15,6 +16,9 @@ class Researcher(User):
 
 class Reviewer(User):
     specialization = models.CharField(max_length=100)
+    models.CharField(max_length=100)
+    deptID = models.CharField(max_length=50, null=True, blank=True) 
+    researchinterests = models.TextField()
 
     class Meta:
         verbose_name = "Reviewer"
@@ -33,3 +37,16 @@ class HOD(User):
     class Meta:
         verbose_name = "HOD"
         verbose_name_plural = "HODs"
+
+class Notification(models.Model):
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    message = models.CharField(max_length=255)
+    link = models.CharField(max_length=200, blank=True, null=True, help_text="URL to redirect to")
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Notification for {self.recipient.username}: {self.message}"

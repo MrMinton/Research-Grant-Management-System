@@ -1,11 +1,18 @@
 from django.db import models
 from users.models import Researcher, Reviewer, HOD, User
+from django.core.validators import FileExtensionValidator
 
 class Proposal(models.Model):
 	proposalID = models.AutoField(primary_key=True)
 	requested_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.0) 
 	title = models.CharField(max_length=255)
-	pdf_file = models.FileField(upload_to='proposals/pdfs/', null=True, blank=True)
+	# --- UPDATED FIELD WITH VALIDATOR ---
+	pdf_file = models.FileField(
+        upload_to='proposals/pdfs/', 
+        null=True, 
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx'])],
+        help_text="Upload only PDF or Word documents (.doc, .docx)")
 	submissionDate = models.DateField(auto_now_add=True) 
 	status = models.CharField(max_length=50, default='Draft') 
 	version = models.FloatField(default=1.0) 
@@ -57,6 +64,14 @@ class ProgressReport(models.Model):
 	submissionDate = models.DateField(auto_now_add=True) 
 	content = models.TextField() 
 	milestonesAchieved = models.TextField() 
+
+	# --- NEW FIELD: Expenditure for this specific report ---
+	expenditure_amount = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0.00,
+        help_text="Amount spent during this reporting period"
+    )
 		
 	proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE) 
 
