@@ -41,6 +41,7 @@ urlpatterns = [
     path('reviewer/dashboard/', grant_views.reviewer_dashboard, name='reviewer_dashboard'),
 
     path('reviewer/evaluate/<int:proposal_id>/', grant_views.evaluate_proposal, name='evaluate_proposal'),
+    path('reviewer/view/<int:proposal_id>/', grant_views.view_evaluation, name='view_evaluation'),
     
     # --- RESEARCHER FEATURES ---
     # Register a new account
@@ -64,14 +65,11 @@ urlpatterns = [
     path('hod/monitor/<int:grant_id>/', grant_views.project_detail, name='project_detail'),
     path('hod/budget/<int:grant_id>/', grant_views.track_budget, name='track_budget'),
     path('hod/analytics/', grant_views.hod_analytics, name='hod_analytics'),
-<<<<<<< Updated upstream
-=======
     path('hod/analytics/export-pdf/', grant_views.export_hod_analytics_pdf, name='export_hod_analytics_pdf'),
 
 
     # --- NOTIFICATIONS ---
     path('notifications/read/', user_views.mark_notifications_read, name='mark_notifications_read'),
->>>>>>> Stashed changes
 ]
 
 if settings.DEBUG:
