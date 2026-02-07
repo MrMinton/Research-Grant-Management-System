@@ -83,11 +83,11 @@
                                     View Grant
                                 </a>
                             {% elif proposal.status == 'Pending' %}
-                                <span class="status-text-muted">Processing...</span>
-                            {% else %}
                                 <a href="{% url 'resubmit_proposal' proposal.proposalID %}" class="btn btn-sm btn-outline-secondary">
                                     Resubmit
                                 </a>
+                            {% else %}
+                                <span class="status-text-muted">Awaiting HOD Decision</span>
                             {% endif %}
                         </td>
                     </tr>
