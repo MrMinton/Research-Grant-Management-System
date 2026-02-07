@@ -59,6 +59,11 @@ def submit_proposal(request):
                 new_proposal.version = 1.0
                 messages.success(request, "Proposal submitted successfully!")
 
+            if new_proposal.pdf_file:
+                new_proposal.status = 'Pending'
+            else:
+                new_proposal.status = 'Draft'
+
             new_proposal.save()
             return redirect('researcher_dashboard')
         
@@ -196,9 +201,15 @@ def reviewer_dashboard(request):
     # Reviewers should see everything that is NOT a 'Draft'.
 
     proposals_to_review = Proposal.objects.all()
+    
+    # Get list of already evaluated proposals
+    evaluated_ids = Evaluation.objects.filter(
+        reviewer=request.user.reviewer
+    ).values_list('proposal_id', flat=True)
 
     context = {
-        'proposals': proposals_to_review
+        'proposals': proposals_to_review,
+        'evaluated_ids': evaluated_ids
     }
     return render(request, 'users/reviewer_dashboard.html', context)
 
@@ -515,4 +526,21 @@ def evaluate_proposal(request, proposal_id):
     return render(request, 'grants/evaluate_proposal.html', {
         'form': form,
         'proposal': proposal
+    })
+
+
+
+@login_required
+def view_evaluation(request, proposal_id):
+    if request.user.role != 'Reviewer':
+        return redirect('home')
+
+    proposal = get_object_or_404(Proposal, pk=proposal_id)
+    
+    # Fetch the evaluation specifically created by this reviewer for this proposal
+    evaluation = get_object_or_404(Evaluation, proposal=proposal, reviewer=request.user.reviewer)
+
+    return render(request, 'grants/view_evaluation.html', {
+        'proposal': proposal, 
+        'evaluation': evaluation
     })

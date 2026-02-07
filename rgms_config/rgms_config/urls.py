@@ -41,7 +41,7 @@ urlpatterns = [
     path('reviewer/dashboard/', grant_views.reviewer_dashboard, name='reviewer_dashboard'),
 
     path('reviewer/evaluate/<int:proposal_id>/', grant_views.evaluate_proposal, name='evaluate_proposal'),
-    
+    path('reviewer/view/<int:proposal_id>/', grant_views.view_evaluation, name='view_evaluation'),
     # --- RESEARCHER FEATURES ---
     # Register a new account
     path('register/', user_views.register_researcher, name='register'),
