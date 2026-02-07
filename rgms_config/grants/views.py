@@ -9,6 +9,12 @@ from django.db.models import Max
 from django.db.models import Sum, Count
 from django.db.models import Max
 from users.models import Notification
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
+from datetime import datetime
+from django.conf import settings
+import os
 
 
 @login_required
@@ -489,6 +495,114 @@ def hod_analytics(request):
         'approval_rate': approval_rate,
         'rejection_rate': rejection_rate
     })
+
+
+@login_required
+def export_hod_analytics_pdf(request):
+    """Export department analytics data as a PDF report."""
+    if request.user.role != 'HOD':
+        return redirect('home')
+    
+    # --- REUSE DATA CALCULATION LOGIC FROM hod_analytics ---
+    # 1. Budget calculations
+    spending_data = Budget.objects.aggregate(total=Sum('totalSpent'))
+    total_spent = spending_data['total'] or 0
+    remaining_funds = request.user.hod.total_department_budget
+    
+    # Calculate total budget for display
+    total_budget = float(total_spent) + float(remaining_funds)
+    
+    # Calculate budget utilization percentage
+    if total_budget > 0:
+        budget_utilization = (float(total_spent) / total_budget) * 100
+    else:
+        budget_utilization = 0
+    
+    # 2. Active grants KPI
+    active_grants_count = Grant.objects.count()
+    
+    # 3. Success metrics
+    total_props = Proposal.objects.count()
+    approved_props = Proposal.objects.filter(status='Approved').count()
+    rejected_props = Proposal.objects.filter(status='Rejected').count()
+    
+    if total_props > 0:
+        approval_rate = round((approved_props / total_props) * 100, 1)
+        rejection_rate = round(rejected_props / total_props * 100, 1)
+    else:
+        approval_rate = 0
+        rejection_rate = 0
+    
+    # Read ONLY PDF-specific CSS from style.css file
+    css_path = os.path.join(settings.BASE_DIR, 'static', 'css', 'style.css')
+    css_content = ''
+    try:
+        with open(css_path, 'r', encoding='utf-8') as f:
+            full_css = f.read()
+            # Extract only the PDF EXPORT STYLES section
+            pdf_start = full_css.find('/* =========================================')
+            pdf_start = full_css.find('PDF EXPORT STYLES', pdf_start)
+            if pdf_start != -1:
+                # Find the start of the comment block
+                section_start = full_css.rfind('/*', 0, pdf_start)
+                # Get everything from that point onward
+                css_content = full_css[section_start:]
+    except Exception as e:
+        # Fallback CSS if file can't be read
+        css_content = '''
+        @page { size: A4; margin: 2cm; }
+        .pdf-body { font-family: Arial, sans-serif; font-size: 12pt; color: #333; }
+        .pdf-header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding-bottom: 15px; }
+        .pdf-header h1 { color: #2563eb; margin: 0; font-size: 24pt; }
+        .pdf-header p { color: #666; margin: 5px 0 0 0; font-size: 11pt; }
+        .pdf-report-date { text-align: right; color: #666; font-size: 10pt; margin-bottom: 20px; }
+        .pdf-section { margin-bottom: 25px; }
+        .pdf-section-title { font-size: 16pt; font-weight: bold; color: #2563eb; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 2px solid #e5e7eb; }
+        .pdf-kpi-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .pdf-kpi-table th { background-color: #f3f4f6; padding: 12px; text-align: left; font-weight: bold; border: 1px solid #d1d5db; }
+        .pdf-kpi-table td { padding: 12px; border: 1px solid #d1d5db; }
+        .pdf-kpi-table tr:nth-child(even) { background-color: #f9fafb; }
+        .pdf-value-positive { color: #10b981; font-weight: bold; }
+        .pdf-value-negative { color: #ef4444; font-weight: bold; }
+        .pdf-value-primary { color: #2563eb; font-weight: bold; }
+        .pdf-stat-grid { display: table; width: 100%; margin-top: 15px; }
+        .pdf-stat-row { display: table-row; }
+        .pdf-stat-label { display: table-cell; padding: 8px; font-weight: bold; width: 60%; }
+        .pdf-stat-value { display: table-cell; padding: 8px; text-align: right; }
+        .pdf-footer { margin-top: 40px; padding-top: 15px; border-top: 1px solid #d1d5db; text-align: center; color: #666; font-size: 9pt; }
+        '''
+    
+    # Prepare context for PDF template
+    context = {
+        'total_spent': float(total_spent),
+        'remaining_funds': float(remaining_funds),
+        'total_budget': total_budget,
+        'budget_utilization': budget_utilization,
+        'active_grants_count': active_grants_count,
+        'approval_rate': approval_rate,
+        'rejection_rate': rejection_rate,
+        'current_date': datetime.now().strftime('%B %d, %Y at %I:%M %p'),
+        'css_content': css_content  # Pass only PDF CSS to template
+    }
+    
+    # Render HTML template with context
+    html = render_to_string('grants/hod_analytics_pdf.html', context)
+    
+    # Create PDF
+    response = HttpResponse(content_type='application/pdf')
+    filename = f"Department_Analytics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    # Convert HTML to PDF
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    
+    if pisa_status.err:
+        return HttpResponse('Error generating PDF', status=500)
+    
+    return response
+
+
+
 
 
 @login_required

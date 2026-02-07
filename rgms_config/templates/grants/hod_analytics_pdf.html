@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Department Analytics Report</title>
+    <style>
+        {{ css_content|safe }}
+    </style>
+</head>
+<body class="pdf-body">
+    <div class="pdf-header">
+        <h1>Department Analytics Report</h1>
+        <p>Detailed Performance Metrics & Budget Breakdown</p>
+    </div>
+    
+    <div class="pdf-report-date">
+        Generated on: {{ current_date }}
+    </div>
+    
+    <!-- Key Performance Indicators -->
+    <div class="pdf-section">
+        <div class="pdf-section-title">Key Performance Indicators</div>
+        <table class="pdf-kpi-table">
+            <tr>
+                <th>Metric</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>Total Spent</td>
+                <td class="pdf-value-negative">RM {{ total_spent|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Remaining Funds</td>
+                <td class="pdf-value-positive">RM {{ remaining_funds|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Active Grants</td>
+                <td class="pdf-value-primary">{{ active_grants_count }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- Budget Utilization -->
+    <div class="pdf-section">
+        <div class="pdf-section-title">Budget Utilization</div>
+        <div class="pdf-stat-grid">
+            <div class="pdf-stat-row">
+                <div class="pdf-stat-label">Total Department Budget:</div>
+                <div class="pdf-stat-value">RM {{ total_budget|floatformat:2 }}</div>
+            </div>
+            <div class="pdf-stat-row">
+                <div class="pdf-stat-label">Funds Spent:</div>
+                <div class="pdf-stat-value">RM {{ total_spent|floatformat:2 }}</div>
+            </div>
+            <div class="pdf-stat-row">
+                <div class="pdf-stat-label">Remaining Budget:</div>
+                <div class="pdf-stat-value">RM {{ remaining_funds|floatformat:2 }}</div>
+            </div>
+            <div class="pdf-stat-row">
+                <div class="pdf-stat-label">Budget Utilization:</div>
+                <div class="pdf-stat-value">{{ budget_utilization|floatformat:1 }}%</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Proposal Success Metrics -->
+    <div class="pdf-section">
+        <div class="pdf-section-title">Proposal Success Metrics</div>
+        <div class="pdf-stat-grid">
+            <div class="pdf-stat-row">
+                <div class="pdf-stat-label">Approval Rate:</div>
+                <div class="pdf-stat-value">{{ approval_rate|floatformat:1 }}%</div>
+            </div>
+            <div class="pdf-stat-row">
+                <div class="pdf-stat-label">Rejection Rate:</div>
+                <div class="pdf-stat-value">{{ rejection_rate|floatformat:1 }}%</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="pdf-footer">
+        <p>This report is confidential and intended for internal use only.</p>
+        <p>Research Grant Management System - Department Analytics</p>
+    </div>
+</body>
+</html>

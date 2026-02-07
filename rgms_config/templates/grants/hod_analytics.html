@@ -8,7 +8,10 @@
         <p style="color: rgba(255,255,255,0.9); margin: 0;">Detailed performance metrics & budget breakdown</p>
     </div>
     
-    <div>
+    <div style="display: flex; gap: 10px;">
+        <a href="{% url 'export_hod_analytics_pdf' %}" class="btn btn-success" style="font-weight: 600; color: white;">
+            📄 Export to PDF
+        </a>
         <a href="{% url 'hod_dashboard' %}" class="btn btn-light" style="font-weight: 600; color: #ffff;">
             &larr; Back to Dashboard
         </a>
