@@ -1,0 +1,45 @@
+Setup Guide
+Follow these steps to set up the project locally.
+
+1. Prerequisites
+Ensure you have Python installed on your machine.
+
+2. Clone the Repository
+
+git clone <your-repo-url>
+cd Research-Grant-Management-System
+
+3. Create a Virtual Environment
+It is recommended to use a virtual environment to manage dependencies.
+
+# Windows
+python -m venv venv
+venv\Scripts\activate
+
+# macOS/Linux
+python3 -m venv venv
+source venv/bin/activate
+
+4. Install Dependencies
+Install the required packages listed in requirements.txt.
+
+pip install -r requirements.txt
+
+5. Database Setup
+Apply the migrations to set up the database schema for Users and Grants.
+
+cd rgms_config
+python manage.py makemigrations
+python manage.py migrate
+
+6. Create a Superuser
+Create an admin account to manage the system.
+
+python manage.py createsuperuser
+
+7. Run the Server
+Start the development server.
+
+python manage.py runserver
+
+Access the application at: http://127.0.0.1:8000/
