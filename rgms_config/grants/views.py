@@ -480,9 +480,10 @@ def hod_analytics(request):
     approved_props = Proposal.objects.filter(status='Approved').count()
     rejected_props = Proposal.objects.filter(status='Rejected').count()
     on_tracked_props = Proposal.objects.filter(status='On Track').count()
+    needs_intervention_props = Proposal.objects.filter(status='Needs Intervention').count()
 
     if total_props > 0:
-        approval_rate = round(((on_tracked_props + approved_props) / total_props * 100), 1)
+        approval_rate = round(((needs_intervention_props + on_tracked_props + approved_props) / total_props * 100), 1)
         rejection_rate = round(rejected_props / total_props * 100, 1)
     else:
         # Avoid showing "100% Rejected" if there are 0 proposals
@@ -495,7 +496,8 @@ def hod_analytics(request):
         'active_grants_count': active_grants_count,
         'approval_rate': approval_rate,
         'rejection_rate': rejection_rate,
-        'on_tracked_props': on_tracked_props
+        'on_tracked_props': on_tracked_props,
+        'needs_intervention_props': needs_intervention_props
     })
 
 
