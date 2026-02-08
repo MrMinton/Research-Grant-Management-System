@@ -464,9 +464,9 @@ def hod_analytics(request):
         return redirect('home')
 
     # --- 1. BUDGET CALCULATIONS ---
-    # Aggregate total spent from all budgets
-    spending_data = Budget.objects.aggregate(total=Sum('totalSpent'))
-    total_spent = spending_data['total'] or 0
+    # Sum all allocated grant amounts (money committed from department budget)
+    allocation_data = Grant.objects.aggregate(total=Sum('totalAllocatedAmount'))
+    total_spent = allocation_data['total'] or 0
     
     # Calculate remaining based on the HOD's limit
     remaining_funds = request.user.hod.total_department_budget
@@ -509,8 +509,8 @@ def export_hod_analytics_pdf(request):
     
     # --- REUSE DATA CALCULATION LOGIC FROM hod_analytics ---
     # 1. Budget calculations
-    spending_data = Budget.objects.aggregate(total=Sum('totalSpent'))
-    total_spent = spending_data['total'] or 0
+    allocation_data = Grant.objects.aggregate(total=Sum('totalAllocatedAmount'))
+    total_spent = allocation_data['total'] or 0
     remaining_funds = request.user.hod.total_department_budget
     
     # Calculate total budget for display
