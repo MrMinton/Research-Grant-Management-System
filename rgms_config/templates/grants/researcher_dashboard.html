@@ -82,7 +82,7 @@
                                 <a href="{% url 'grant_detail' proposal.proposalID %}" class="btn btn-sm btn-primary-gradient shadow-hover">
                                     View Grant
                                 </a>
-                            {% elif proposal.status == 'Pending' %}
+                            {% elif proposal.status == 'Pending' or proposal.status == 'Draft' or proposal.status == 'Rejected' %}
                                 <a href="{% url 'resubmit_proposal' proposal.proposalID %}" class="btn btn-sm btn-outline-secondary">
                                     Resubmit
                                 </a>
