@@ -62,6 +62,10 @@
                                 <span class="badge badge-danger-soft pulse-animation">
                                     <i class="status-icon">⚠️</i> Intervention
                                 </span>
+                            {% elif proposal.status == 'Rejected' %}
+                                <span class="badge badge-danger-soft pulse-animation">
+                                    <i class="status-icon">❌</i> Rejected
+                                </span>
                             {% elif proposal.status == 'Pending' %}
                                 <span class="badge badge-warning-soft">
                                     <i class="status-icon">⏳</i> Pending
